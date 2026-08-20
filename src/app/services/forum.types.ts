@@ -38,14 +38,28 @@ export interface ThreadHead {
   sticky: boolean;
 }
 
+export interface Reaction {
+  kaomoji: string;
+  count: number;
+  mine: boolean;
+}
+
 export interface Post {
   id: number;
   author: string;
+  authorId: number;
   body: string;
   createdAt: string;
+  editedAt: string | null;
+  reactions: Reaction[];
 }
 
 export interface ThreadView {
   thread: ThreadHead;
   posts: Post[];
+  viewerId: number;
+  viewerIsAdmin: boolean;
 }
+
+/** The reaction palette members can choose from (mirrors the API allow-list). */
+export const REACTION_PALETTE = ['♥', '☆', '✧', '(＾▽＾)', '(=^･ω･^=)', 'orz'];

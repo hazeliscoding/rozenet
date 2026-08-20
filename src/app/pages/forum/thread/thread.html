@@ -12,6 +12,11 @@
     <div class="gn-counter">
       <b>{{ v.posts.length }}</b> posts
       @if (v.thread.locked) { · <span class="gn-newtag gn-newtag--locked">[locked]</span> }
+      @if (v.thread.sticky) { · <span class="gn-newtag">[sticky]</span> }
+      @if (v.viewerIsAdmin) {
+        · <a href="#" (click)="$event.preventDefault(); toggleLock()">{{ v.thread.locked ? 'unlock' : 'lock' }}</a>
+        · <a href="#" (click)="$event.preventDefault(); toggleSticky()">{{ v.thread.sticky ? 'unpin' : 'pin' }}</a>
+      }
     </div>
 
     <div class="gn-stack">
@@ -19,14 +24,64 @@
         <section class="gn-panel">
           <div class="gn-panel__head" [class.gn-panel__head--gold]="i === 0">
             <span class="gn-panel__glyph">{{ i === 0 ? '★' : '●' }}</span>{{ post.author }}
-            <span class="gn-panel__count">{{ post.createdAt | date: 'MMM d, y, h:mm a' }}</span>
+            <span class="gn-panel__count">
+              {{ post.createdAt | date: 'MMM d, y, h:mm a' }}@if (post.editedAt) { · edited }
+            </span>
           </div>
           <div class="gn-panel__body">
-            <p class="post-body">{{ post.body }}</p>
+            @if (editingId() === post.id) {
+              <textarea class="textarea" [(ngModel)]="editBody"></textarea>
+              <div class="post-actions" style="margin-top: 0.8rem">
+                <button class="gn-btn" (click)="saveEdit(post)" [disabled]="busy()">save</button>
+                <button class="gn-btn gn-btn--ghost" (click)="cancelEdit()">cancel</button>
+              </div>
+            } @else {
+              <p class="post-body">{{ post.body }}</p>
+
+              <div class="reaction-row">
+                @for (r of post.reactions; track r.kaomoji) {
+                  <button
+                    class="reaction"
+                    [class.reaction--mine]="r.mine"
+                    (click)="react(post, r.kaomoji)"
+                    [title]="r.mine ? 'remove your reaction' : 'react'"
+                  >
+                    <span class="reaction__kao">{{ r.kaomoji }}</span>
+                    <span class="reaction__n">{{ r.count }}</span>
+                  </button>
+                }
+
+                <span class="reaction-add">
+                  <button class="reaction reaction--add" (click)="togglePicker(post.id)" title="add a reaction">+</button>
+                  @if (pickerId() === post.id) {
+                    <span class="reaction-picker">
+                      @for (kao of palette; track kao) {
+                        <button class="reaction-pick" (click)="react(post, kao)">{{ kao }}</button>
+                      }
+                    </span>
+                  }
+                </span>
+              </div>
+
+              @if (canEdit(post) || canDelete(post)) {
+                <div class="post-actions">
+                  @if (canEdit(post)) {
+                    <a href="#" (click)="$event.preventDefault(); startEdit(post)">edit</a>
+                  }
+                  @if (canDelete(post)) {
+                    <a href="#" class="danger" (click)="$event.preventDefault(); deletePost(post)">
+                      {{ isFirst(post) ? 'delete thread' : 'delete' }}
+                    </a>
+                  }
+                </div>
+              }
+            }
           </div>
         </section>
       }
     </div>
+
+    @if (error()) { <p class="form-error" style="margin-top: 1.2rem">{{ error() }}</p> }
 
     @if (v.thread.locked) {
       <div class="gn-webring">this thread is locked ✕</div>
@@ -41,7 +96,6 @@
               <span>signed in as {{ auth.user()?.username }}</span>
               <textarea class="textarea" name="body" [(ngModel)]="replyBody" required></textarea>
             </label>
-            @if (error()) { <p class="form-error">{{ error() }}</p> }
             <button class="gn-btn" type="submit" [disabled]="busy()">
               {{ busy() ? 'posting...' : 'post reply' }}
             </button>

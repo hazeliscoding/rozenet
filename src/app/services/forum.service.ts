@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Board, ThreadRow, ThreadView } from './forum.types';
+import { Board, Reaction, ThreadRow, ThreadView } from './forum.types';
 
 @Injectable({ providedIn: 'root' })
 export class ForumService {
@@ -25,5 +25,21 @@ export class ForumService {
 
   reply(threadId: number, body: string): Observable<unknown> {
     return this.http.post(`/api/threads/${threadId}/posts`, { body });
+  }
+
+  react(postId: number, kaomoji: string): Observable<Reaction[]> {
+    return this.http.post<Reaction[]>(`/api/posts/${postId}/reactions`, { kaomoji });
+  }
+
+  editPost(postId: number, body: string): Observable<unknown> {
+    return this.http.patch(`/api/posts/${postId}`, { body });
+  }
+
+  deletePost(postId: number): Observable<{ threadDeleted: boolean; threadId: number }> {
+    return this.http.delete<{ threadDeleted: boolean; threadId: number }>(`/api/posts/${postId}`);
+  }
+
+  moderate(threadId: number, change: { locked?: boolean; sticky?: boolean }): Observable<unknown> {
+    return this.http.post(`/api/threads/${threadId}/moderate`, change);
   }
 }

@@ -21,6 +21,9 @@ boards, threads, and posts are all Postgres-backed via the .NET API.
   interceptor attaches the token; board/thread reads and all writes require a valid session.
 - **Invites:** single-use codes. Admins mint them (`POST /api/admin/invites`); a
   member redeems one to create their account.
+- **Posting:** react to posts with a fixed kaomoji palette (`♥ ☆ ✧ (＾▽＾) (=^･ω･^=) orz`),
+  edit or delete your own posts (deleting a thread's opening post removes the thread),
+  and — as an admin — lock or pin threads from the thread view.
 - **Bootstrap (local dev only):** first API start seeds an admin `roze` /
   `roze-local-dev`, three boards, a sticky welcome thread, and one open invite
   code **`WELCOME-TO-THE-DEN`**. Change these before any real deployment.
@@ -37,8 +40,12 @@ boards, threads, and posts are all Postgres-backed via the .NET API.
 | GET | `/api/boards` | member | boards + counts |
 | GET | `/api/boards/{slug}/threads` | member | threads in a board |
 | POST | `/api/boards/{slug}/threads` | member | start a thread |
-| GET | `/api/threads/{id}` | member | thread + posts |
+| GET | `/api/threads/{id}` | member | thread + posts (with reactions) |
 | POST | `/api/threads/{id}/posts` | member | reply |
+| POST | `/api/posts/{id}/reactions` | member | toggle a kaomoji reaction |
+| PATCH | `/api/posts/{id}` | author | edit a post |
+| DELETE | `/api/posts/{id}` | author/admin | delete a post (or thread, if it's the OP) |
+| POST | `/api/threads/{id}/moderate` | admin | lock / sticky a thread |
 | GET / POST | `/api/admin/invites` | admin | list / mint invite codes |
 
 ## Running
@@ -80,6 +87,6 @@ dotnet run         # http://localhost:8080 (expects local Postgres, see Program.
 
 - [x] Forum phase 1 — accounts & invite codes
 - [x] Forum phase 2 — boards, threads, posts
-- [ ] Forum phase 3 — kaomoji reactions, edit/delete, mod tools (lock/sticky UI)
+- [x] Forum phase 3 — kaomoji reactions, edit/delete, mod tools (lock/sticky)
 - [ ] Email-backed invite delivery
 - [ ] Deploy

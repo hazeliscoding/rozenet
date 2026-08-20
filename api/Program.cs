@@ -264,8 +264,8 @@ app.MapPost("/api/boards/{slug}/threads", async (string slug, NewThreadRequest r
 
 app.MapGet("/api/threads/{id:int}", async (int id, HttpContext ctx, NpgsqlDataSource db) =>
 {
-    if (await Auth.ResolveAsync(ctx, db) is null)
-        return Results.Json(new { error = "members only." }, Json.Options, statusCode: 401);
+    var viewer = await Auth.ResolveAsync(ctx, db);
+    if (viewer is null) return Results.Json(new { error = "members only." }, Json.Options, statusCode: 401);
 
     ThreadHeadDto head;
     await using (var cmd = db.CreateCommand(
@@ -282,22 +282,51 @@ app.MapGet("/api/threads/{id:int}", async (int id, HttpContext ctx, NpgsqlDataSo
             r.GetBoolean(4), r.GetBoolean(5));
     }
 
-    var posts = new List<PostDto>();
+    // Gather reactions for the thread's posts, grouped per post with a "mine" flag.
+    var byPost = new Dictionary<int, Dictionary<string, (int Count, bool Mine)>>();
     await using (var cmd = db.CreateCommand(
         """
-        SELECT p.id, u.username, p.body, p.created_at
-        FROM posts p JOIN users u ON u.id = p.author_id
+        SELECT r.post_id, r.kaomoji, r.user_id
+        FROM reactions r JOIN posts p ON p.id = r.post_id
         WHERE p.thread_id = $1
-        ORDER BY p.created_at
         """))
     {
         cmd.Parameters.AddWithValue(id);
         await using var r = await cmd.ExecuteReaderAsync();
         while (await r.ReadAsync())
-            posts.Add(new PostDto(r.GetInt32(0), r.GetString(1), r.GetString(2), r.GetDateTime(3)));
+        {
+            var postId = r.GetInt32(0);
+            var kao = r.GetString(1);
+            var mine = r.GetInt32(2) == viewer.Id;
+            var group = byPost.TryGetValue(postId, out var g) ? g : byPost[postId] = new();
+            var (count, wasMine) = group.TryGetValue(kao, out var v) ? v : (0, false);
+            group[kao] = (count + 1, wasMine || mine);
+        }
     }
 
-    return Results.Json(new ThreadViewDto(head, posts), Json.Options);
+    var posts = new List<PostDto>();
+    await using (var cmd = db.CreateCommand(
+        """
+        SELECT p.id, u.username, p.author_id, p.body, p.created_at, p.edited_at
+        FROM posts p JOIN users u ON u.id = p.author_id
+        WHERE p.thread_id = $1
+        ORDER BY p.created_at, p.id
+        """))
+    {
+        cmd.Parameters.AddWithValue(id);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+        {
+            var postId = r.GetInt32(0);
+            var reactions = byPost.TryGetValue(postId, out var g)
+                ? g.Select(kv => new ReactionDto(kv.Key, kv.Value.Count, kv.Value.Mine)).ToList()
+                : [];
+            posts.Add(new PostDto(postId, r.GetString(1), r.GetInt32(2), r.GetString(3),
+                r.GetDateTime(4), r.IsDBNull(5) ? null : r.GetDateTime(5), reactions));
+        }
+    }
+
+    return Results.Json(new ThreadViewDto(head, posts, viewer.Id, viewer.IsAdmin), Json.Options);
 });
 
 app.MapPost("/api/threads/{id:int}/posts", async (int id, NewPostRequest req, HttpContext ctx, NpgsqlDataSource db) =>
@@ -333,6 +362,158 @@ app.MapPost("/api/threads/{id:int}/posts", async (int id, NewPostRequest req, Ht
         u.Parameters.AddWithValue(id);
         await u.ExecuteNonQueryAsync();
     }
+
+    return Results.Json(new { ok = true }, Json.Options);
+});
+
+// ---- reactions ----
+
+app.MapPost("/api/posts/{id:int}/reactions", async (int id, ReactionRequest req, HttpContext ctx, NpgsqlDataSource db) =>
+{
+    var user = await Auth.ResolveAsync(ctx, db);
+    if (user is null) return Results.Json(new { error = "sign in first." }, Json.Options, statusCode: 401);
+
+    var kao = (req.Kaomoji ?? "").Trim();
+    if (!Reactions.Allowed.Contains(kao))
+        return Results.BadRequest(new { error = "that's not a reaction you can use." });
+
+    await using var conn = await db.OpenConnectionAsync();
+
+    // Toggle: remove if the member already reacted with this kaomoji, else add.
+    await using (var del = new NpgsqlCommand(
+        "DELETE FROM reactions WHERE post_id = $1 AND user_id = $2 AND kaomoji = $3", conn))
+    {
+        del.Parameters.AddWithValue(id);
+        del.Parameters.AddWithValue(user.Id);
+        del.Parameters.AddWithValue(kao);
+        if (await del.ExecuteNonQueryAsync() == 0)
+        {
+            await using var ins = new NpgsqlCommand(
+                "INSERT INTO reactions(post_id, user_id, kaomoji) VALUES($1,$2,$3)", conn);
+            ins.Parameters.AddWithValue(id);
+            ins.Parameters.AddWithValue(user.Id);
+            ins.Parameters.AddWithValue(kao);
+            await ins.ExecuteNonQueryAsync();
+        }
+    }
+
+    // Return the fresh summary for this post.
+    var summary = new List<ReactionDto>();
+    await using (var cmd = new NpgsqlCommand(
+        """
+        SELECT kaomoji, COUNT(*), bool_or(user_id = $2)
+        FROM reactions WHERE post_id = $1
+        GROUP BY kaomoji
+        """, conn))
+    {
+        cmd.Parameters.AddWithValue(id);
+        cmd.Parameters.AddWithValue(user.Id);
+        await using var r = await cmd.ExecuteReaderAsync();
+        while (await r.ReadAsync())
+            summary.Add(new ReactionDto(r.GetString(0), (int)r.GetInt64(1), r.GetBoolean(2)));
+    }
+
+    return Results.Json(summary, Json.Options);
+});
+
+// ---- edit / delete posts ----
+
+app.MapPatch("/api/posts/{id:int}", async (int id, NewPostRequest req, HttpContext ctx, NpgsqlDataSource db) =>
+{
+    var user = await Auth.ResolveAsync(ctx, db);
+    if (user is null) return Results.Json(new { error = "sign in first." }, Json.Options, statusCode: 401);
+
+    var body = (req.Body ?? "").Trim();
+    if (body.Length < 1) return Results.BadRequest(new { error = "empty post." });
+
+    await using var conn = await db.OpenConnectionAsync();
+    await using var cmd = new NpgsqlCommand(
+        "UPDATE posts SET body = $1, edited_at = now() WHERE id = $2 AND author_id = $3", conn);
+    cmd.Parameters.AddWithValue(body);
+    cmd.Parameters.AddWithValue(id);
+    cmd.Parameters.AddWithValue(user.Id);
+    // Only the author may edit — a 0-row update means not theirs (or gone).
+    if (await cmd.ExecuteNonQueryAsync() == 0)
+        return Results.Json(new { error = "you can only edit your own posts." }, Json.Options, statusCode: 403);
+
+    return Results.Json(new { ok = true }, Json.Options);
+});
+
+app.MapDelete("/api/posts/{id:int}", async (int id, HttpContext ctx, NpgsqlDataSource db) =>
+{
+    var user = await Auth.ResolveAsync(ctx, db);
+    if (user is null) return Results.Json(new { error = "sign in first." }, Json.Options, statusCode: 401);
+
+    await using var conn = await db.OpenConnectionAsync();
+    await using var tx = await conn.BeginTransactionAsync();
+
+    int authorId, threadId;
+    await using (var find = new NpgsqlCommand("SELECT author_id, thread_id FROM posts WHERE id = $1", conn, tx))
+    {
+        find.Parameters.AddWithValue(id);
+        await using var r = await find.ExecuteReaderAsync();
+        if (!await r.ReadAsync()) return Results.NotFound(new { error = "post not found." });
+        authorId = r.GetInt32(0);
+        threadId = r.GetInt32(1);
+    }
+
+    if (authorId != user.Id && !user.IsAdmin)
+        return Results.Json(new { error = "not yours to delete." }, Json.Options, statusCode: 403);
+
+    // Is this the opening post? If so, deleting it removes the whole thread.
+    int firstPostId;
+    await using (var first = new NpgsqlCommand(
+        "SELECT id FROM posts WHERE thread_id = $1 ORDER BY created_at, id LIMIT 1", conn, tx))
+    {
+        first.Parameters.AddWithValue(threadId);
+        firstPostId = (int)(await first.ExecuteScalarAsync())!;
+    }
+
+    var threadDeleted = firstPostId == id;
+    if (threadDeleted)
+    {
+        // reactions cascade from posts; remove posts then the thread.
+        await Exec(conn, tx, "DELETE FROM posts WHERE thread_id = $1", threadId);
+        await Exec(conn, tx, "DELETE FROM threads WHERE id = $1", threadId);
+    }
+    else
+    {
+        await Exec(conn, tx, "DELETE FROM posts WHERE id = $1", id);
+        await using var bump = new NpgsqlCommand(
+            "UPDATE threads SET last_post_at = (SELECT MAX(created_at) FROM posts WHERE thread_id = $1) WHERE id = $1",
+            conn, tx);
+        bump.Parameters.AddWithValue(threadId);
+        await bump.ExecuteNonQueryAsync();
+    }
+
+    await tx.CommitAsync();
+    return Results.Json(new { threadDeleted, threadId }, Json.Options);
+
+    static async Task Exec(NpgsqlConnection c, NpgsqlTransaction t, string sql, int arg)
+    {
+        await using var cmd = new NpgsqlCommand(sql, c, t);
+        cmd.Parameters.AddWithValue(arg);
+        await cmd.ExecuteNonQueryAsync();
+    }
+});
+
+// ---- mod tools: lock / sticky ----
+
+app.MapPost("/api/threads/{id:int}/moderate", async (int id, ModerateRequest req, HttpContext ctx, NpgsqlDataSource db) =>
+{
+    var user = await Auth.ResolveAsync(ctx, db);
+    if (user is null || !user.IsAdmin)
+        return Results.Json(new { error = "the leash is not yours to hold." }, Json.Options, statusCode: 403);
+
+    var sets = new List<string>();
+    if (req.Locked is not null) sets.Add($"locked = {(req.Locked.Value ? "true" : "false")}");
+    if (req.Sticky is not null) sets.Add($"sticky = {(req.Sticky.Value ? "true" : "false")}");
+    if (sets.Count == 0) return Results.BadRequest(new { error = "nothing to change." });
+
+    await using var cmd = db.CreateCommand($"UPDATE threads SET {string.Join(", ", sets)} WHERE id = $1");
+    cmd.Parameters.AddWithValue(id);
+    if (await cmd.ExecuteNonQueryAsync() == 0)
+        return Results.NotFound(new { error = "thread not found." });
 
     return Results.Json(new { ok = true }, Json.Options);
 });
@@ -386,6 +567,13 @@ app.Run();
 static class Json
 {
     public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web);
+}
+
+static class Reactions
+{
+    // The only reactions members can use — kaomoji + dingbats, on brand.
+    public static readonly HashSet<string> Allowed =
+        ["♥", "☆", "✧", "(＾▽＾)", "(=^･ω･^=)", "orz"];
 }
 
 static class Auth
@@ -536,6 +724,14 @@ static class Db
                 author_id INT NOT NULL REFERENCES users(id),
                 body TEXT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+            ALTER TABLE posts ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ NULL;
+            CREATE TABLE IF NOT EXISTS reactions(
+                id SERIAL PRIMARY KEY,
+                post_id INT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+                user_id INT NOT NULL REFERENCES users(id),
+                kaomoji TEXT NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                UNIQUE(post_id, user_id, kaomoji));
             """);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -643,6 +839,8 @@ record RedeemRequest(string? Code, string? Username, string? Password);
 record LoginRequest(string? Username, string? Password);
 record NewThreadRequest(string? Title, string? Body);
 record NewPostRequest(string? Body);
+record ReactionRequest(string? Kaomoji);
+record ModerateRequest(bool? Locked, bool? Sticky);
 
 record CurrentUser(int Id, string Username, bool IsAdmin);
 record UserDto(int Id, string Username, bool IsAdmin);
@@ -652,6 +850,8 @@ record BoardDto(string Slug, string Title, string Description, string Glyph, int
 record ThreadRowDto(int Id, string Title, string Author, DateTime CreatedAt, DateTime LastPostAt,
     bool Locked, bool Sticky, int Replies);
 record ThreadHeadDto(int Id, string Title, string BoardSlug, string BoardTitle, bool Locked, bool Sticky);
-record PostDto(int Id, string Author, string Body, DateTime CreatedAt);
-record ThreadViewDto(ThreadHeadDto Thread, List<PostDto> Posts);
+record ReactionDto(string Kaomoji, int Count, bool Mine);
+record PostDto(int Id, string Author, int AuthorId, string Body, DateTime CreatedAt,
+    DateTime? EditedAt, List<ReactionDto> Reactions);
+record ThreadViewDto(ThreadHeadDto Thread, List<PostDto> Posts, int ViewerId, bool ViewerIsAdmin);
 record InviteDto(string Code, string? RedeemedBy, DateTime CreatedAt, DateTime? RedeemedAt);
