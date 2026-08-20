@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Board, Reaction, ThreadRow, ThreadView } from './forum.types';
+import { Board, InviteResult, InviteRow, Reaction, ThreadRow, ThreadView } from './forum.types';
 
 @Injectable({ providedIn: 'root' })
 export class ForumService {
@@ -41,5 +41,18 @@ export class ForumService {
 
   moderate(threadId: number, change: { locked?: boolean; sticky?: boolean }): Observable<unknown> {
     return this.http.post(`/api/threads/${threadId}/moderate`, change);
+  }
+
+  // ---- admin: invites ----
+  mintInvite(): Observable<InviteResult> {
+    return this.http.post<InviteResult>('/api/admin/invites', {});
+  }
+
+  emailInvite(email: string): Observable<InviteResult> {
+    return this.http.post<InviteResult>('/api/admin/invites/email', { email });
+  }
+
+  invites(): Observable<InviteRow[]> {
+    return this.http.get<InviteRow[]>('/api/admin/invites');
   }
 }

@@ -17,6 +17,14 @@ services:
     build: ./api
     environment:
       ConnectionStrings__Db: Host=db;Port=5432;Database=rozenet;Username=rozenet;Password=rozenet-local-dev
+      App__BaseUrl: http://localhost:8090
+      # To actually send invite emails, set these (otherwise links are logged):
+      # Smtp__Host: smtp.example.com
+      # Smtp__Port: "587"
+      # Smtp__User: you@example.com
+      # Smtp__Pass: app-password
+      # Smtp__From: roze@example.com
+      # Smtp__FromName: roze
     depends_on:
       db:
         condition: service_healthy

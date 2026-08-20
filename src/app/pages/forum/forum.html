@@ -41,6 +41,64 @@
     @if (error()) {
       <p class="gn-tagline" style="color: var(--danger); margin-top: 1.2rem">{{ error() }}</p>
     }
+
+    @if (me.isAdmin) {
+      <section class="gn-panel" style="margin-top: 1.6rem">
+        <div class="gn-panel__head gn-panel__head--gold">
+          <span class="gn-panel__glyph">✉</span>invite a friend
+          <span class="gn-panel__count">the leash</span>
+        </div>
+        <div class="gn-panel__body">
+          <form (ngSubmit)="sendEmailInvite()" class="invite-form">
+            <input class="input" name="inviteEmail" type="email" [(ngModel)]="inviteEmail"
+              placeholder="friend@example.com" autocomplete="off" />
+            <button class="gn-btn" type="submit" [disabled]="inviteBusy()">
+              {{ inviteBusy() ? 'sending...' : 'email invite' }}
+            </button>
+            <button class="gn-btn gn-btn--ghost" type="button" (click)="mintCode()" [disabled]="inviteBusy()">
+              just mint a code
+            </button>
+          </form>
+
+          @if (inviteError()) { <p class="form-error" style="margin-top: 0.8rem">{{ inviteError() }}</p> }
+
+          @if (inviteResult(); as res) {
+            <div class="invite-result">
+              <div>
+                @if (res.emailed) {
+                  <span class="gn-newtag">[sent ♥]</span> emailed the invite.
+                } @else {
+                  <span class="gn-newtag gn-newtag--locked">[not emailed]</span>
+                  no mail server configured — share this link yourself:
+                }
+              </div>
+              <code class="invite-link">{{ res.link }}</code>
+              <button class="gn-btn gn-btn--gold" type="button" (click)="copyLink()">
+                {{ copied() ? 'copied!' : 'copy link' }}
+              </button>
+            </div>
+          }
+
+          @if (invites().length) {
+            <table class="gn-table" style="margin-top: 1.2rem">
+              <tbody>
+                @for (inv of invites(); track inv.code) {
+                  <tr>
+                    <td><span class="gn-mono">{{ inv.code }}</span></td>
+                    <td class="gn-table__desc">{{ inv.invitedEmail || '—' }}</td>
+                    <td class="gn-table__meta">
+                      @if (inv.redeemedBy) {
+                        <span style="color: var(--gold-600)">{{ inv.redeemedBy }}</span>
+                      } @else { <span>unused</span> }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      </section>
+    }
   } @else {
     <!-- ===== signed out: gate ===== -->
     <div class="gn-counter">door status: <b>locked</b> · members inside: classified</div>
@@ -54,6 +112,11 @@
             <span class="gn-panel__count">[members only]</span>
           </div>
           <div class="gn-panel__body">
+            @if (mode() === 'redeem' && code) {
+              <p class="gn-tagline" style="margin-bottom: 1.2rem">
+                someone left the door open for you ♥ pick a name and you're in.
+              </p>
+            }
             <form (ngSubmit)="submit()">
               @if (mode() === 'redeem') {
                 <label class="field">

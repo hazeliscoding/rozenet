@@ -19,8 +19,10 @@ boards, threads, and posts are all Postgres-backed via the .NET API.
 
 - **Auth:** PBKDF2 password hashing, 30-day bearer-token sessions. The Angular
   interceptor attaches the token; board/thread reads and all writes require a valid session.
-- **Invites:** single-use codes. Admins mint them (`POST /api/admin/invites`); a
-  member redeems one to create their account.
+- **Invites:** single-use codes. Admins mint a bare code or **email an invite** to a
+  friend; the emailed link (`/forum?invite=CODE`) drops them straight into the redeem
+  form. Email sends via SMTP when configured, otherwise the link is logged and shown
+  in the admin panel to share by hand.
 - **Posting:** react to posts with a fixed kaomoji palette (`♥ ☆ ✧ (＾▽＾) (=^･ω･^=) orz`),
   edit or delete your own posts (deleting a thread's opening post removes the thread),
   and — as an admin — lock or pin threads from the thread view.
@@ -47,6 +49,7 @@ boards, threads, and posts are all Postgres-backed via the .NET API.
 | DELETE | `/api/posts/{id}` | author/admin | delete a post (or thread, if it's the OP) |
 | POST | `/api/threads/{id}/moderate` | admin | lock / sticky a thread |
 | GET / POST | `/api/admin/invites` | admin | list / mint invite codes |
+| POST | `/api/admin/invites/email` | admin | email an invite link to an address |
 
 ## Running
 
@@ -88,5 +91,17 @@ dotnet run         # http://localhost:8080 (expects local Postgres, see Program.
 - [x] Forum phase 1 — accounts & invite codes
 - [x] Forum phase 2 — boards, threads, posts
 - [x] Forum phase 3 — kaomoji reactions, edit/delete, mod tools (lock/sticky)
-- [ ] Email-backed invite delivery
+- [x] Email-backed invite delivery (SMTP, with a dev log/copy fallback)
 - [ ] Deploy
+
+## Sending real invite emails
+
+By default the API only logs invite links (dev). To actually send mail, set these
+env vars on the `api` service (see `docker-compose.yml` for the commented block):
+
+```
+Smtp__Host, Smtp__Port, Smtp__User, Smtp__Pass, Smtp__From, Smtp__FromName
+App__BaseUrl   # public origin used to build invite links, e.g. https://rozenet.example
+```
+
+Any STARTTLS SMTP provider works (Fastmail, Gmail app-password, Postmark, etc.).

@@ -16,6 +16,28 @@ var connectionString =
 
 builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 
+// Email sender: real SMTP when Smtp:Host is set, else a dev logger.
+var smtpHost = builder.Configuration["Smtp:Host"];
+if (!string.IsNullOrWhiteSpace(smtpHost))
+{
+    var opts = new SmtpOptions(
+        smtpHost,
+        int.TryParse(builder.Configuration["Smtp:Port"], out var p) ? p : 587,
+        builder.Configuration["Smtp:User"],
+        builder.Configuration["Smtp:Pass"],
+        builder.Configuration["Smtp:From"] ?? "roze@rozenet.local",
+        builder.Configuration["Smtp:FromName"] ?? "roze");
+    builder.Services.AddSingleton(opts);
+    builder.Services.AddSingleton<IEmailSender, SmtpEmailSender>();
+}
+else
+{
+    builder.Services.AddSingleton<IEmailSender, LogEmailSender>();
+}
+
+// Base URL used to build invite links (nginx origin in the docker stack).
+var appBaseUrl = (builder.Configuration["App:BaseUrl"] ?? "http://localhost:8090").TrimEnd('/');
+
 var app = builder.Build();
 app.UseCors();
 
@@ -532,7 +554,35 @@ app.MapPost("/api/admin/invites", async (HttpContext ctx, NpgsqlDataSource db) =
     cmd.Parameters.AddWithValue(user.Id);
     await cmd.ExecuteNonQueryAsync();
 
-    return Results.Json(new { code }, Json.Options);
+    return Results.Json(new { code, link = $"{appBaseUrl}/forum?invite={code}" }, Json.Options);
+});
+
+app.MapPost("/api/admin/invites/email", async (EmailInviteRequest req, HttpContext ctx, NpgsqlDataSource db, IEmailSender email) =>
+{
+    var user = await Auth.ResolveAsync(ctx, db);
+    if (user is null || !user.IsAdmin)
+        return Results.Json(new { error = "the leash is not yours to hold." }, Json.Options, statusCode: 403);
+
+    var address = (req.Email ?? "").Trim();
+    if (!address.Contains('@') || address.Length < 5)
+        return Results.BadRequest(new { error = "that doesn't look like an email." });
+
+    var code = Auth.NewInviteCode();
+    await using (var cmd = db.CreateCommand(
+        "INSERT INTO invites(code, created_by, invited_email) VALUES($1,$2,$3)"))
+    {
+        cmd.Parameters.AddWithValue(code);
+        cmd.Parameters.AddWithValue(user.Id);
+        cmd.Parameters.AddWithValue(address);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    var link = $"{appBaseUrl}/forum?invite={code}";
+    var emailed = await email.SendInviteAsync(address, link);
+
+    // The link is returned so the admin can copy it (and always, in dev, where
+    // no mail is actually sent). code is included for convenience.
+    return Results.Json(new { code, link, emailed }, Json.Options);
 });
 
 app.MapGet("/api/admin/invites", async (HttpContext ctx, NpgsqlDataSource db) =>
@@ -543,7 +593,7 @@ app.MapGet("/api/admin/invites", async (HttpContext ctx, NpgsqlDataSource db) =>
 
     await using var cmd = db.CreateCommand(
         """
-        SELECT i.code, u.username, i.created_at, i.redeemed_at
+        SELECT i.code, i.invited_email, u.username, i.created_at, i.redeemed_at
         FROM invites i LEFT JOIN users u ON u.id = i.redeemed_by
         ORDER BY i.created_at DESC
         """);
@@ -552,8 +602,9 @@ app.MapGet("/api/admin/invites", async (HttpContext ctx, NpgsqlDataSource db) =>
     while (await r.ReadAsync())
         invites.Add(new InviteDto(r.GetString(0),
             r.IsDBNull(1) ? null : r.GetString(1),
-            r.GetDateTime(2),
-            r.IsDBNull(3) ? null : r.GetDateTime(3)));
+            r.IsDBNull(2) ? null : r.GetString(2),
+            r.GetDateTime(3),
+            r.IsDBNull(4) ? null : r.GetDateTime(4)));
 
     return Results.Json(invites, Json.Options);
 });
@@ -700,6 +751,7 @@ static class Db
                 redeemed_by INT NULL REFERENCES users(id),
                 created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
                 redeemed_at TIMESTAMPTZ NULL);
+            ALTER TABLE invites ADD COLUMN IF NOT EXISTS invited_email TEXT NULL;
             CREATE TABLE IF NOT EXISTS sessions(
                 token TEXT PRIMARY KEY,
                 user_id INT NOT NULL REFERENCES users(id),
@@ -841,6 +893,7 @@ record NewThreadRequest(string? Title, string? Body);
 record NewPostRequest(string? Body);
 record ReactionRequest(string? Kaomoji);
 record ModerateRequest(bool? Locked, bool? Sticky);
+record EmailInviteRequest(string? Email);
 
 record CurrentUser(int Id, string Username, bool IsAdmin);
 record UserDto(int Id, string Username, bool IsAdmin);
@@ -854,4 +907,4 @@ record ReactionDto(string Kaomoji, int Count, bool Mine);
 record PostDto(int Id, string Author, int AuthorId, string Body, DateTime CreatedAt,
     DateTime? EditedAt, List<ReactionDto> Reactions);
 record ThreadViewDto(ThreadHeadDto Thread, List<PostDto> Posts, int ViewerId, bool ViewerIsAdmin);
-record InviteDto(string Code, string? RedeemedBy, DateTime CreatedAt, DateTime? RedeemedAt);
+record InviteDto(string Code, string? InvitedEmail, string? RedeemedBy, DateTime CreatedAt, DateTime? RedeemedAt);

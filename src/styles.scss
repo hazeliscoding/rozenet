@@ -756,6 +756,49 @@ a {
   }
 }
 
+// ---- admin invite panel ----
+.invite-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+
+  .input {
+    flex: 1;
+    min-width: 20rem;
+  }
+}
+
+.invite-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 1.2rem;
+  padding: 0.8rem;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+
+  & > div {
+    flex-basis: 100%;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+  }
+}
+
+.invite-link {
+  flex: 1;
+  min-width: 20rem;
+  font-family: var(--font-mono);
+  font-size: 1.2rem;
+  color: var(--gold-600);
+  background: var(--bg-page);
+  border: 1px solid var(--line);
+  padding: 0.4rem 0.6rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
 // ---- toast ----
 .gn-toast {
   position: fixed;

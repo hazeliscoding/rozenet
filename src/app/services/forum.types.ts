@@ -63,3 +63,17 @@ export interface ThreadView {
 
 /** The reaction palette members can choose from (mirrors the API allow-list). */
 export const REACTION_PALETTE = ['♥', '☆', '✧', '(＾▽＾)', '(=^･ω･^=)', 'orz'];
+
+export interface InviteResult {
+  code: string;
+  link: string;
+  emailed: boolean;
+}
+
+export interface InviteRow {
+  code: string;
+  invitedEmail: string | null;
+  redeemedBy: string | null;
+  createdAt: string;
+  redeemedAt: string | null;
+}
