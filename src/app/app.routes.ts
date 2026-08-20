@@ -14,6 +14,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/forum/forum').then((m) => m.ForumPage),
   },
   {
+    path: 'forum/b/:slug',
+    loadComponent: () => import('./pages/forum/board/board').then((m) => m.BoardPage),
+  },
+  {
+    path: 'forum/t/:id',
+    loadComponent: () => import('./pages/forum/thread/thread').then((m) => m.ThreadPage),
+  },
+  {
     path: '**',
     loadComponent: () =>
       import('./pages/not-found/not-found').then((m) => m.NotFoundPage),

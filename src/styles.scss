@@ -613,6 +613,60 @@ a {
   }
 }
 
+// ---- forms ----
+.field {
+  display: block;
+  margin-bottom: 1rem;
+
+  span {
+    display: block;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+  }
+}
+
+.input,
+.textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 1.3rem;
+  color: var(--text-body);
+  background: var(--bg-sunken);
+  border: 2px solid;
+  border-color: var(--bevel-dark) var(--bevel-lite) var(--bevel-lite) var(--bevel-dark);
+  border-radius: 0;
+  padding: 0.5rem 0.8rem;
+
+  &:focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.textarea {
+  min-height: 9rem;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.switch {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+.post-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 // ---- toast ----
 .gn-toast {
   position: fixed;

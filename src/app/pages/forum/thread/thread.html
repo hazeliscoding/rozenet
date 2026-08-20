@@ -1,0 +1,61 @@
+<div class="gn-shell fade">
+  @if (view(); as v) {
+    <header class="gn-masthead">
+      <div class="gn-wordmark" style="font-size: 3rem">{{ v.thread.title }}</div>
+      <div class="gn-tagline">
+        ⌂ <a routerLink="/forum">boards</a> »
+        <a [routerLink]="['/forum/b', v.thread.boardSlug]">{{ v.thread.boardTitle }}</a> »
+        <b>thread</b>
+      </div>
+    </header>
+
+    <div class="gn-counter">
+      <b>{{ v.posts.length }}</b> posts
+      @if (v.thread.locked) { · <span class="gn-newtag gn-newtag--locked">[locked]</span> }
+    </div>
+
+    <div class="gn-stack">
+      @for (post of v.posts; track post.id; let i = $index) {
+        <section class="gn-panel">
+          <div class="gn-panel__head" [class.gn-panel__head--gold]="i === 0">
+            <span class="gn-panel__glyph">{{ i === 0 ? '★' : '●' }}</span>{{ post.author }}
+            <span class="gn-panel__count">{{ post.createdAt | date: 'MMM d, y, h:mm a' }}</span>
+          </div>
+          <div class="gn-panel__body">
+            <p class="post-body">{{ post.body }}</p>
+          </div>
+        </section>
+      }
+    </div>
+
+    @if (v.thread.locked) {
+      <div class="gn-webring">this thread is locked ✕</div>
+    } @else {
+      <section class="gn-panel gn-panel--pop" style="margin-top: 1.6rem">
+        <div class="gn-panel__head">
+          <span class="gn-panel__glyph">✎</span>post a reply
+        </div>
+        <div class="gn-panel__body">
+          <form (ngSubmit)="reply()">
+            <label class="field">
+              <span>signed in as {{ auth.user()?.username }}</span>
+              <textarea class="textarea" name="body" [(ngModel)]="replyBody" required></textarea>
+            </label>
+            @if (error()) { <p class="form-error">{{ error() }}</p> }
+            <button class="gn-btn" type="submit" [disabled]="busy()">
+              {{ busy() ? 'posting...' : 'post reply' }}
+            </button>
+          </form>
+        </div>
+      </section>
+    }
+
+    <div class="gn-webring">
+      <a [routerLink]="['/forum/b', v.thread.boardSlug]">« back to {{ v.thread.boardTitle }}</a>
+    </div>
+  } @else if (error()) {
+    <section class="gn-panel" style="margin-top: 1.6rem">
+      <div class="gn-panel__body">{{ error() }}</div>
+    </section>
+  }
+</div>

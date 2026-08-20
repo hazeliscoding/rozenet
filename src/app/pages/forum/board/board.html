@@ -1,0 +1,66 @@
+<div class="gn-shell fade">
+  <header class="gn-masthead">
+    <div class="gn-wordmark">the control room<span class="gn-spark"> ✦</span></div>
+    <div class="gn-tagline">⌂ <a routerLink="/forum">boards</a> » <b>{{ slug }}</b></div>
+  </header>
+
+  <div class="gn-counter">
+    <b>{{ threads().length }}</b> threads ·
+    <a href="#" (click)="$event.preventDefault(); composing.set(!composing())">
+      {{ composing() ? 'never mind' : 'new thread +' }}
+    </a>
+  </div>
+
+  @if (composing()) {
+    <section class="gn-panel gn-panel--pop" style="margin-bottom: 1.6rem">
+      <div class="gn-panel__head">
+        <span class="gn-panel__glyph">✎</span>new thread
+      </div>
+      <div class="gn-panel__body">
+        <form (ngSubmit)="post()">
+          <label class="field">
+            <span>title</span>
+            <input class="input" name="title" [(ngModel)]="newTitle" maxlength="140" required />
+          </label>
+          <label class="field">
+            <span>first post</span>
+            <textarea class="textarea" name="body" [(ngModel)]="newBody" required></textarea>
+          </label>
+          @if (error()) { <p class="form-error">{{ error() }}</p> }
+          <button class="gn-btn" type="submit" [disabled]="busy()">
+            {{ busy() ? 'posting...' : 'post thread' }}
+          </button>
+        </form>
+      </div>
+    </section>
+  }
+
+  <section class="gn-panel">
+    <div class="gn-panel__head">
+      <span class="gn-panel__glyph">►</span>threads
+      <span class="gn-panel__count">{{ threads().length }}</span>
+    </div>
+    <table class="gn-table">
+      <tbody>
+        @for (thread of threads(); track thread.id) {
+          <tr class="clickable" [routerLink]="['/forum/t', thread.id]">
+            <td class="gn-mark" [class.gn-mark--new]="thread.sticky">{{ thread.sticky ? '★' : '☆' }}</td>
+            <td>
+              @if (thread.sticky) { <b class="gn-newtag">[sticky]</b> }
+              @if (thread.locked) { <b class="gn-newtag gn-newtag--locked">[locked]</b> }
+              <a [routerLink]="['/forum/t', thread.id]" (click)="$event.stopPropagation()">{{ thread.title }}</a>
+              <div class="gn-table__desc">by {{ thread.author }} · {{ thread.lastPostAt | date: 'MMM d, y, h:mm a' }}</div>
+            </td>
+            <td class="gn-table__meta"><span class="gn-mono">{{ thread.replies }}</span> replies</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="3" style="padding: 1.2rem">no threads yet... start one! ☆</td></tr>
+        }
+      </tbody>
+    </table>
+  </section>
+
+  <div class="gn-webring">
+    <a routerLink="/forum">« all boards</a>
+  </div>
+</div>

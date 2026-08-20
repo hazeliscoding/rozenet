@@ -4,78 +4,111 @@
     <div class="gn-tagline">a private forum for invited friends</div>
   </header>
 
-  <div class="gn-counter">door status: <b>locked</b> · members inside: classified</div>
+  @if (auth.user(); as me) {
+    <!-- ===== signed in: boards ===== -->
+    <div class="gn-counter">
+      signed in as <b>{{ me.username }}</b>@if (me.isAdmin) { <span class="gn-newtag">[mod]</span> } ·
+      <a href="#" (click)="$event.preventDefault(); logout()">log out</a>
+    </div>
 
-  <div class="gn-cols gn-cols--right">
-    <main class="gn-stack">
-      <section class="gn-panel gn-panel--pop">
-        <div class="gn-panel__head">
-          <span class="gn-panel__glyph">✕</span>members only
-          <span class="gn-panel__count">[locked]</span>
-        </div>
-        <div class="gn-panel__body">
-          <p>
-            this den keeps its doors closed. the forum is invite-only —
-            a quiet place for friends to talk anime, games, and everything else
-            that doesn't belong on the public internet.
-          </p>
-          <p>
-            if you're meant to be here, an invite will find you.
-            it's not a contract. promise.
-          </p>
-          <div class="gn-quote">$ door: sealed · knocking: allowed · begging: adorable</div>
-        </div>
-      </section>
+    <section class="gn-panel gn-panel--pop">
+      <div class="gn-panel__head">
+        <span class="gn-panel__glyph">⌂</span>boards
+        <span class="gn-panel__count">{{ boards().length }} rooms</span>
+      </div>
+      <table class="gn-table">
+        <tbody>
+          @for (board of boards(); track board.slug) {
+            <tr class="clickable" [routerLink]="['/forum/b', board.slug]">
+              <td class="gn-mark gn-mark--new">{{ board.glyph }}</td>
+              <td>
+                <a [routerLink]="['/forum/b', board.slug]" (click)="$event.stopPropagation()">{{ board.title }}</a>
+                <div class="gn-table__desc">{{ board.description }}</div>
+              </td>
+              <td class="gn-table__meta">
+                <span class="gn-mono">{{ board.threads }}</span> threads<br />
+                <span class="gn-mono">{{ board.posts }}</span> posts
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="3" style="padding: 1.2rem">no boards yet.</td></tr>
+          }
+        </tbody>
+      </table>
+      <div class="gn-sig">sig: "be a good visitor and nothing bad will happen ♥"</div>
+    </section>
 
-      <section class="gn-panel">
-        <div class="gn-panel__head gn-panel__head--gold">
-          <span class="gn-panel__glyph">✎</span>sign in
-        </div>
-        <div class="gn-panel__body">
-          <p class="gn-tagline" style="margin-bottom: 1.2rem">
-            accounts arrive with the backend. for now, the door only knows how to stay shut.
-          </p>
-          <button class="gn-btn gn-btn--disabled gn-btn--block" disabled>
-            sign in — soon
-          </button>
-        </div>
-      </section>
-    </main>
+    @if (error()) {
+      <p class="gn-tagline" style="color: var(--danger); margin-top: 1.2rem">{{ error() }}</p>
+    }
+  } @else {
+    <!-- ===== signed out: gate ===== -->
+    <div class="gn-counter">door status: <b>locked</b> · members inside: classified</div>
 
-    <aside class="gn-stack">
-      <section class="gn-panel">
-        <div class="gn-panel__head">
-          <span class="gn-panel__glyph">★</span>want in?
-        </div>
-        <div class="gn-panel__body">
-          <p>invites are personal. if we know each other, just ask.</p>
-          <a
-            class="gn-btn gn-btn--block"
-            href="mailto:hazel.granados@protonmail.com?subject=rozenet%20invite%3F"
-            >request an invite</a
-          >
-        </div>
-      </section>
+    <div class="gn-cols gn-cols--right">
+      <main class="gn-stack">
+        <section class="gn-panel gn-panel--pop">
+          <div class="gn-panel__head">
+            <span class="gn-panel__glyph">✕</span>
+            {{ mode() === 'redeem' ? 'redeem an invite' : 'sign in' }}
+            <span class="gn-panel__count">[members only]</span>
+          </div>
+          <div class="gn-panel__body">
+            <form (ngSubmit)="submit()">
+              @if (mode() === 'redeem') {
+                <label class="field">
+                  <span>invite code</span>
+                  <input class="input" name="code" [(ngModel)]="code" placeholder="XXXX-XXXX-XXXX" autocomplete="off" required />
+                </label>
+              }
+              <label class="field">
+                <span>name</span>
+                <input class="input" name="username" [(ngModel)]="username" autocomplete="username" required />
+              </label>
+              <label class="field">
+                <span>password</span>
+                <input class="input" name="password" type="password" [(ngModel)]="password" autocomplete="current-password" required />
+              </label>
 
-      <section class="gn-panel">
-        <div class="gn-panel__head gn-panel__head--gold">
-          <span class="gn-panel__glyph">»</span>coming soon
-        </div>
-        <div class="gn-panel__body">
-          <ul class="gn-list">
-            <li>accounts &amp; invites</li>
-            <li>boards &amp; threads</li>
-            <li>kaomoji reactions</li>
-            <li>mod tools (the leash)</li>
-          </ul>
-        </div>
-      </section>
+              @if (error()) {
+                <p class="form-error">{{ error() }}</p>
+              }
 
-      <section class="gn-panel">
-        <div class="gn-panel__body">
-          <a class="gn-btn gn-btn--ghost gn-btn--block" routerLink="/">« back to the den</a>
-        </div>
-      </section>
-    </aside>
-  </div>
+              <button class="gn-btn gn-btn--block" type="submit" [disabled]="busy()">
+                {{ busy() ? 'knocking...' : (mode() === 'redeem' ? 'enter the den' : 'sign in') }}
+              </button>
+            </form>
+
+            <p class="switch">
+              @if (mode() === 'redeem') {
+                already a member?
+                <a href="#" (click)="$event.preventDefault(); setMode('login')">sign in</a>
+              } @else {
+                got an invite code?
+                <a href="#" (click)="$event.preventDefault(); setMode('redeem')">redeem it</a>
+              }
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <aside class="gn-stack">
+        <section class="gn-panel">
+          <div class="gn-panel__head gn-panel__head--gold">
+            <span class="gn-panel__glyph">★</span>want in?
+          </div>
+          <div class="gn-panel__body">
+            <p>invites are personal. if we know each other, just ask — i'll mint you a code.</p>
+            <a class="gn-btn gn-btn--block" href="mailto:hazel.granados@protonmail.com?subject=rozenet%20invite%3F">request an invite</a>
+          </div>
+        </section>
+
+        <section class="gn-panel">
+          <div class="gn-panel__body">
+            <a class="gn-btn gn-btn--ghost gn-btn--block" routerLink="/">« back to the den</a>
+          </div>
+        </section>
+      </aside>
+    </div>
+  }
 </div>
