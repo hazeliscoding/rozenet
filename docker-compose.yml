@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: rozenet
+      POSTGRES_USER: rozenet
+      POSTGRES_PASSWORD: rozenet-local-dev
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rozenet -d rozenet"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build: ./api
+    environment:
+      ConnectionStrings__Db: Host=db;Port=5432;Database=rozenet;Username=rozenet;Password=rozenet-local-dev
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: .
+    ports:
+      - "8090:80"
+    depends_on:
+      - api
+
+volumes:
+  dbdata:

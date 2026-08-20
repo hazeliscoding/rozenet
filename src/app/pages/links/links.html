@@ -1,0 +1,61 @@
+<div class="gn-shell fade">
+  <header class="gn-masthead">
+    <div class="gn-wordmark">the directory<span class="gn-spark"> ✦</span></div>
+    <div class="gn-tagline">every corner of the web where i exist — hand-picked, dead links pruned</div>
+  </header>
+
+  <div class="gn-counter"><b>{{ linkCount }}</b> links listed · migrated from roze-tree ♥</div>
+
+  <div class="gn-stack">
+    @for (category of categories(); track category.title) {
+      <section class="gn-panel">
+        <div class="gn-panel__head">
+          <span class="gn-panel__glyph">{{ category.glyph }}</span>{{ category.title }}
+          <span class="gn-panel__count">{{ category.links.length }} links</span>
+        </div>
+        <table class="gn-table">
+          <tbody>
+            @for (link of category.links; track link.label) {
+              <tr class="clickable" (click)="open(link)">
+                <td class="gn-mark gn-mark--new">{{ link.glyph }}</td>
+                <td>
+                  <a
+                    [href]="link.copyText ? null : link.url"
+                    target="_blank"
+                    rel="noopener"
+                    (click)="$event.preventDefault(); $event.stopPropagation(); open(link)"
+                    >{{ link.label }}</a
+                  >
+                  @if (link.copyText) {
+                    <span class="gn-newtag">[tap to copy]</span>
+                  }
+                  <div class="gn-table__desc">{{ link.description }}</div>
+                </td>
+                <td class="gn-table__meta">
+                  <span class="gn-mono">{{ link.copyText ? 'copy »' : 'visit »' }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
+
+    <section class="gn-panel">
+      <div class="gn-panel__head gn-panel__head--gold">
+        <span class="gn-panel__glyph">✧</span>the old tree
+      </div>
+      <div class="gn-panel__body">
+        <p>
+          this directory replaces my old linktree,
+          <a href="https://hazeliscoding.github.io/roze-tree/" target="_blank" rel="noopener">roze-tree</a>.
+          it had a good run — but the den needed a proper front door ☆
+        </p>
+      </div>
+    </section>
+  </div>
+
+  @if (toast()) {
+    <div class="gn-toast" role="status">{{ toast() }}</div>
+  }
+</div>

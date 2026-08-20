@@ -1,59 +1,50 @@
-# Rozenet
+# rozenet ✦
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.21.
+Roze's den — a personal, non-work website with a GlitterNet-style design and a Makima motif (black, glitter red, gold). Home of the link directory (replacing [roze-tree](https://hazeliscoding.github.io/roze-tree/)) and, eventually, a private invite-only forum.
 
-## Development server
+> 🖤 Platform: Angular 21 SPA · .NET 10 minimal API · PostgreSQL · Docker
 
-To start a local development server, run:
+## Pages
 
-```bash
-ng serve
-```
+- `/` — the den (member-profile home)
+- `/links` — the directory (categories + copy-to-clipboard rows, served from the API when up, bundled data otherwise)
+- `/forum` — the control room (invite-only gate; real forum is roadmap)
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Running
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+**Full stack (docker):**
 
 ```bash
-ng generate component component-name
+docker compose up --build
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Open `http://localhost:8090`. nginx serves the SPA and proxies `/api` to the .NET service; the API creates and seeds the Postgres `links` tables on first start.
+
+**Frontend only:**
 
 ```bash
-ng generate --help
+npm install
+npm start          # ng serve on http://localhost:4200, /api proxied to :8080
 ```
 
-## Building
+Without the API running, the links page falls back to `src/app/data/links.data.ts`.
 
-To build the project run:
+**API only:**
 
 ```bash
-ng build
+cd api
+dotnet run         # http://localhost:8080 (expects local Postgres, see Program.cs)
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Editing content
 
-## Running unit tests
+- Links: edit the seed in `api/Program.cs` (system of record) and mirror in `src/app/data/links.data.ts` (static fallback).
+- Profile/home copy: `src/app/pages/home/home.html`.
+- Theme tokens: `src/styles.scss` (`--red-*`, `--gold-*`, surfaces).
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Roadmap
 
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [ ] Forum phase 1 — accounts & invite codes (.NET + Postgres)
+- [ ] Forum phase 2 — boards, threads, posts
+- [ ] Forum phase 3 — kaomoji reactions, mod tools
+- [ ] Deploy
