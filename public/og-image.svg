@@ -1,0 +1,51 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .mono { font-family: "Courier New", Courier, monospace; }
+      .body { font-family: "Trebuchet MS", "Segoe UI", Tahoma, Verdana, sans-serif; }
+    </style>
+  </defs>
+
+  <!-- Glitter-red frame on warm black -->
+  <rect width="1200" height="630" fill="#c42a45"/>
+  <rect x="10" y="10" width="1180" height="610" fill="#0a0507"/>
+
+  <!-- corner sparkles -->
+  <path d="M8 2 C8.6 5.4 10.6 7.4 14 8 C10.6 8.6 8.6 10.6 8 14 C7.4 10.6 5.4 8.6 2 8 C5.4 7.4 7.4 5.4 8 2 Z"
+    fill="none" stroke="#ff2e55" stroke-width="1.4" stroke-linejoin="round" transform="translate(1044 46) scale(3.6)"/>
+  <path d="M8 2 C8.6 5.4 10.6 7.4 14 8 C10.6 8.6 8.6 10.6 8 14 C7.4 10.6 5.4 8.6 2 8 C5.4 7.4 7.4 5.4 8 2 Z"
+    fill="none" stroke="#f2c14e" stroke-width="1.4" stroke-linejoin="round" transform="translate(62 520) scale(2.8)"/>
+
+  <!-- panel sticker shadow + panel -->
+  <rect x="130" y="150" width="940" height="360" fill="#3d0f1a"/>
+  <rect x="118" y="138" width="940" height="360" fill="#140a0d" stroke="#c42a45" stroke-width="4"/>
+
+  <!-- panel head -->
+  <rect x="120" y="140" width="936" height="58" fill="#5e1424"/>
+  <rect x="120" y="198" width="936" height="4" fill="#c42a45"/>
+  <text x="148" y="178" class="body" font-size="24" font-weight="bold" fill="#ffe0e5">★ roze's den</text>
+  <text x="1028" y="177" text-anchor="end" class="mono" font-size="20" fill="#ff9db2">members only</text>
+
+  <!-- wordmark + drawn spark -->
+  <text x="158" y="312" class="mono" font-size="88" font-weight="bold" fill="#f5e8ea">roze's den</text>
+  <path d="M8 2 C8.6 5.4 10.6 7.4 14 8 C10.6 8.6 8.6 10.6 8 14 C7.4 10.6 5.4 8.6 2 8 C5.4 7.4 7.4 5.4 8 2 Z"
+    transform="translate(700 232) scale(6)" fill="#ff2e55" stroke="#ffe6a8" stroke-width="0.5" stroke-linejoin="round"/>
+
+  <!-- tagline -->
+  <text x="160" y="372" class="body" font-size="28" fill="#b0888f">anime · games · cute things on the internet</text>
+
+  <!-- tag pills -->
+  <g>
+    <rect x="160" y="402" width="118" height="44" rx="22" fill="#200a0f" stroke="#ff2e55" stroke-width="2"/>
+    <text x="219" y="431" text-anchor="middle" class="body" font-size="20" font-weight="bold" fill="#ff9db2">anime</text>
+    <rect x="294" y="402" width="118" height="44" rx="22" fill="#200a0f" stroke="#ff2e55" stroke-width="2"/>
+    <text x="353" y="431" text-anchor="middle" class="body" font-size="20" font-weight="bold" fill="#ff9db2">games</text>
+    <rect x="428" y="402" width="126" height="44" rx="22" fill="#241807" stroke="#ddab3f" stroke-width="2"/>
+    <text x="491" y="431" text-anchor="middle" class="body" font-size="20" font-weight="bold" fill="#ffe6a8">figures</text>
+    <rect x="570" y="402" width="150" height="44" rx="22" fill="#241807" stroke="#ddab3f" stroke-width="2"/>
+    <text x="645" y="431" text-anchor="middle" class="body" font-size="20" font-weight="bold" fill="#ffe6a8">web toys</text>
+  </g>
+
+  <!-- domain -->
+  <text x="160" y="480" class="mono" font-size="24" fill="#f2c14e">rozeangel.moe</text>
+</svg>

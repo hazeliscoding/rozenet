@@ -42,6 +42,20 @@ else
 var appBaseUrl = (builder.Configuration["App:BaseUrl"] ?? "http://localhost:8090").TrimEnd('/');
 
 var app = builder.Build();
+
+// Canonical host: 301 www.* → the bare apex (keeps one canonical URL).
+app.Use(async (ctx, next) =>
+{
+    var host = ctx.Request.Host.Host;
+    if (host.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+    {
+        ctx.Response.Redirect(
+            $"https://{host[4..]}{ctx.Request.Path}{ctx.Request.QueryString}", permanent: true);
+        return;
+    }
+    await next();
+});
+
 app.UseCors();
 
 // Serve the built Angular SPA when it's bundled in (the combined Railway image
