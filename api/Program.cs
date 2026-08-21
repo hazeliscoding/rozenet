@@ -63,6 +63,7 @@ await Db.InitializeAsync(app.Services.GetRequiredService<NpgsqlDataSource>(), ap
 // ---- health + links directory ----
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/version", () => Results.Ok(new { app = "rozenet", version = "1.0.0" }));
 
 app.MapGet("/api/links", async (NpgsqlDataSource db) =>
 {
