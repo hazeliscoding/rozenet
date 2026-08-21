@@ -63,7 +63,17 @@ await Db.InitializeAsync(app.Services.GetRequiredService<NpgsqlDataSource>(), ap
 // ---- health + links directory ----
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-app.MapGet("/version", () => Results.Ok(new { app = "rozenet", version = "1.0.0" }));
+app.MapGet("/version", (IConfiguration cfg) =>
+{
+    // Railway injects git metadata at runtime for GitHub-sourced deploys.
+    var sha = cfg["RAILWAY_GIT_COMMIT_SHA"];
+    return Results.Ok(new
+    {
+        app = "rozenet",
+        commit = string.IsNullOrEmpty(sha) ? "dev" : sha[..Math.Min(7, sha.Length)],
+        branch = cfg["RAILWAY_GIT_BRANCH"] ?? "local",
+    });
+});
 
 app.MapGet("/api/links", async (NpgsqlDataSource db) =>
 {
