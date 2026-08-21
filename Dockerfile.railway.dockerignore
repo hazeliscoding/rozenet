@@ -1,0 +1,9 @@
+# Ignore file specific to Dockerfile.railway (BuildKit picks this over the
+# root .dockerignore). Unlike the root one, it KEEPS api/ since the combined
+# image builds both the SPA and the API.
+node_modules
+dist
+.angular
+.git
+**/bin
+**/obj

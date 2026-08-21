@@ -4,16 +4,19 @@ using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Railway (and most PaaS) inject a PORT to listen on. Locally this is unset
+// and the Dockerfile's ASPNETCORE_URLS (8080) applies.
+var port = builder.Configuration["PORT"];
+if (!string.IsNullOrWhiteSpace(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // Dev CORS so `ng serve` (4200) can hit the API directly; in the docker
 // stack nginx proxies /api same-origin and this never comes into play.
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
         policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()));
 
-var connectionString =
-    builder.Configuration.GetConnectionString("Db")
-    ?? "Host=localhost;Port=5432;Database=rozenet;Username=rozenet;Password=rozenet";
-
+var connectionString = ResolveConnectionString(builder.Configuration);
 builder.Services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 
 // Email sender: real SMTP when Smtp:Host is set, else a dev logger.
@@ -41,7 +44,21 @@ var appBaseUrl = (builder.Configuration["App:BaseUrl"] ?? "http://localhost:8090
 var app = builder.Build();
 app.UseCors();
 
-await Db.InitializeAsync(app.Services.GetRequiredService<NpgsqlDataSource>(), app.Logger);
+// Serve the built Angular SPA when it's bundled in (the combined Railway image
+// copies it to wwwroot). Harmless locally where wwwroot is empty and the SPA is
+// served by nginx / ng serve instead.
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// Bootstrap admin credentials. Defaults are LOCAL DEV ONLY (visible in this
+// public repo) — a real deployment MUST override Bootstrap__Password (and
+// ideally Bootstrap__Admin / Bootstrap__Invite) via env vars.
+var bootstrap = new BootstrapConfig(
+    builder.Configuration["Bootstrap:Admin"] ?? "roze",
+    builder.Configuration["Bootstrap:Password"] ?? "roze-local-dev",
+    builder.Configuration["Bootstrap:Invite"] ?? "WELCOME-TO-THE-DEN");
+
+await Db.InitializeAsync(app.Services.GetRequiredService<NpgsqlDataSource>(), app.Logger, bootstrap);
 
 // ---- health + links directory ----
 
@@ -609,11 +626,42 @@ app.MapGet("/api/admin/invites", async (HttpContext ctx, NpgsqlDataSource db) =>
     return Results.Json(invites, Json.Options);
 });
 
+// SPA fallback: any non-API route serves index.html so client-side routing works
+// (only matters when wwwroot is populated, i.e. the combined image).
+app.MapFallbackToFile("index.html");
+
 app.Run();
 
 // ============================================================
 // helpers
 // ============================================================
+
+// Prefer an explicit Npgsql connection string (ConnectionStrings__Db); otherwise
+// accept a postgres:// URL (Railway's DATABASE_URL) and convert it.
+static string ResolveConnectionString(IConfiguration cfg)
+{
+    var explicitCs = cfg.GetConnectionString("Db");
+    if (!string.IsNullOrWhiteSpace(explicitCs)) return explicitCs;
+
+    var url = cfg["DATABASE_URL"];
+    if (!string.IsNullOrWhiteSpace(url))
+    {
+        var uri = new Uri(url);
+        var creds = uri.UserInfo.Split(':', 2);
+        return new NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.Port > 0 ? uri.Port : 5432,
+            Username = Uri.UnescapeDataString(creds[0]),
+            Password = creds.Length > 1 ? Uri.UnescapeDataString(creds[1]) : "",
+            Database = uri.AbsolutePath.TrimStart('/'),
+            SslMode = SslMode.Prefer,
+            TrustServerCertificate = true,
+        }.ConnectionString;
+    }
+
+    return "Host=localhost;Port=5432;Database=rozenet;Username=rozenet;Password=rozenet";
+}
 
 static class Json
 {
@@ -699,13 +747,7 @@ static class Auth
 
 static class Db
 {
-    // Bootstrap admin — LOCAL DEV ONLY (this is a public repo). Change before
-    // any real deployment; a deployed instance should seed from a secret.
-    private const string BootstrapAdmin = "roze";
-    private const string BootstrapPassword = "roze-local-dev";
-    private const string BootstrapInvite = "WELCOME-TO-THE-DEN";
-
-    public static async Task InitializeAsync(NpgsqlDataSource db, ILogger logger)
+    public static async Task InitializeAsync(NpgsqlDataSource db, ILogger logger, BootstrapConfig bootstrap)
     {
         const int maxAttempts = 10;
         for (var attempt = 1; ; attempt++)
@@ -714,7 +756,7 @@ static class Db
             {
                 await CreateSchemaAsync(db);
                 await SeedLinksAsync(db, logger);
-                await SeedForumAsync(db, logger);
+                await SeedForumAsync(db, logger, bootstrap);
                 return;
             }
             catch (Exception ex) when (attempt < maxAttempts)
@@ -809,7 +851,7 @@ static class Db
         logger.LogInformation("Seeded link directory");
     }
 
-    private static async Task SeedForumAsync(NpgsqlDataSource db, ILogger logger)
+    private static async Task SeedForumAsync(NpgsqlDataSource db, ILogger logger, BootstrapConfig bootstrap)
     {
         await using var count = db.CreateCommand("SELECT COUNT(*) FROM users");
         if ((long)(await count.ExecuteScalarAsync())! > 0) return;
@@ -817,13 +859,13 @@ static class Db
         await using var conn = await db.OpenConnectionAsync();
         await using var tx = await conn.BeginTransactionAsync();
 
-        var (hash, salt) = Auth.HashPassword(BootstrapPassword);
+        var (hash, salt) = Auth.HashPassword(bootstrap.Password);
         int adminId;
         await using (var u = new NpgsqlCommand(
             "INSERT INTO users(username, password_hash, password_salt, is_admin) VALUES($1,$2,$3,true) RETURNING id",
             conn, tx))
         {
-            u.Parameters.AddWithValue(BootstrapAdmin);
+            u.Parameters.AddWithValue(bootstrap.Admin);
             u.Parameters.AddWithValue(hash);
             u.Parameters.AddWithValue(salt);
             adminId = (int)(await u.ExecuteScalarAsync())!;
@@ -832,7 +874,7 @@ static class Db
         await using (var inv = new NpgsqlCommand(
             "INSERT INTO invites(code, created_by) VALUES($1,$2)", conn, tx))
         {
-            inv.Parameters.AddWithValue(BootstrapInvite);
+            inv.Parameters.AddWithValue(bootstrap.Invite);
             inv.Parameters.AddWithValue(adminId);
             await inv.ExecuteNonQueryAsync();
         }
@@ -876,7 +918,7 @@ static class Db
 
         await tx.CommitAsync();
         logger.LogInformation("Seeded forum (admin '{Admin}', bootstrap invite '{Invite}')",
-            BootstrapAdmin, BootstrapInvite);
+            bootstrap.Admin, bootstrap.Invite);
     }
 }
 
@@ -894,6 +936,7 @@ record NewPostRequest(string? Body);
 record ReactionRequest(string? Kaomoji);
 record ModerateRequest(bool? Locked, bool? Sticky);
 record EmailInviteRequest(string? Email);
+record BootstrapConfig(string Admin, string Password, string Invite);
 
 record CurrentUser(int Id, string Username, bool IsAdmin);
 record UserDto(int Id, string Username, bool IsAdmin);

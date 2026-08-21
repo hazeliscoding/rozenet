@@ -94,6 +94,45 @@ dotnet run         # http://localhost:8080 (expects local Postgres, see Program.
 - [x] Email-backed invite delivery (SMTP, with a dev log/copy fallback)
 - [ ] Deploy
 
+## Deploying to Railway
+
+rozenet deploys as a **single container** (`Dockerfile.railway`) where the .NET API
+also serves the built Angular SPA — so it's one Railway service plus a managed
+Postgres. `railway.json` points the build at that Dockerfile. (Local dev is
+unchanged: `docker compose` still runs nginx + api + db separately.)
+
+One-time setup with the [Railway CLI](https://docs.railway.com/guides/cli):
+
+```bash
+railway login                       # opens a browser
+railway init                        # create a project (name it "rozenet")
+railway add --database postgres     # add a managed Postgres
+
+# Point the app's DB at Railway's Postgres, and set a real admin password.
+# (Adjust "Postgres" if your DB service has a different name.)
+railway variables --set 'DATABASE_URL=${{Postgres.DATABASE_URL}}'
+railway variables --set 'Bootstrap__Password=<pick-a-strong-password>'
+
+railway up                          # build Dockerfile.railway + deploy
+railway domain                      # generate a public https URL
+```
+
+Then set `App__BaseUrl` to that URL (used to build invite links) and redeploy:
+
+```bash
+railway variables --set 'App__BaseUrl=https://<your-app>.up.railway.app'
+railway up
+```
+
+Sign in at `/forum` as `roze` / the `Bootstrap__Password` you set, then mint
+your own invites. Prefer git-based deploys? Connect the GitHub repo in the
+Railway dashboard instead of `railway up` — it rebuilds on every push.
+
+> ⚠️ **Change the bootstrap password.** The default (`roze-local-dev`) is in this
+> public repo. `Bootstrap__Password` (and optionally `Bootstrap__Admin` /
+> `Bootstrap__Invite`) must be overridden on any public deployment. They only
+> take effect on first boot, when the database is seeded.
+
 ## Sending real invite emails
 
 By default the API only logs invite links (dev). To actually send mail, set these

@@ -1,0 +1,29 @@
+# Combined single-container image for Railway: the .NET API serves the built
+# Angular SPA from wwwroot, so one service handles both /api and the site.
+# (Local dev still uses docker-compose with separate nginx + api + db.)
+
+# 1. Build the Angular app
+FROM node:22-alpine AS web
+WORKDIR /web
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# 2. Build the .NET API
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS api
+WORKDIR /src
+COPY api/RozeNet.Api.csproj ./
+RUN dotnet restore
+COPY api/ ./
+RUN dotnet publish -c Release -o /out
+
+# 3. Runtime: API + SPA in wwwroot
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=api /out ./
+COPY --from=web /web/dist/rozenet/browser ./wwwroot
+# Railway overrides with its own PORT; this is the local-run default.
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "RozeNet.Api.dll"]
