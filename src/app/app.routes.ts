@@ -1,6 +1,7 @@
+import { isDevMode } from '@angular/core';
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [
+const siteRoutes: Routes = [
   {
     path: '',
     loadComponent: () => import('./pages/home/home').then((m) => m.HomePage),
@@ -27,3 +28,19 @@ export const routes: Routes = [
       import('./pages/not-found/not-found').then((m) => m.NotFoundPage),
   },
 ];
+
+// The site is under construction: production builds show the placeholder page
+// on every path, while `ng serve` (dev builds) keeps the real site.
+const underConstructionRoutes: Routes = [
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./pages/under-construction/under-construction').then(
+        (m) => m.UnderConstructionPage,
+      ),
+  },
+];
+
+export const routes: Routes = isDevMode()
+  ? siteRoutes
+  : underConstructionRoutes;

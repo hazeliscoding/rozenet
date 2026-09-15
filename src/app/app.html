@@ -1,4 +1,5 @@
 <div appSparkleCursor>
+  @if (!underConstruction) {
   <nav class="gn-topbar">
     <a class="gn-topbar__brand" routerLink="/">rozenet<span class="gn-spark"> ✦</span></a>
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">home</a>
@@ -6,11 +7,13 @@
     <a routerLink="/forum" routerLinkActive="active">forum</a>
     <span class="gn-topbar__crumb">⌂ den » <b>roze</b></span>
   </nav>
+  }
 
   <main>
     <router-outlet />
   </main>
 
+  @if (!underConstruction) {
   <footer class="gn-footer">
     <div class="gn-webring">
       <a routerLink="/">« home</a>
@@ -22,4 +25,5 @@
     <p style="margin-top: 1.2rem">made with <span class="heart">♥</span> by roze</p>
     <p class="mono">you were never in control of this page</p>
   </footer>
+  }
 </div>
