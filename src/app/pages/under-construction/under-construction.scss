@@ -30,6 +30,7 @@
 
 .uc-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,6 +49,8 @@
 
 .dw-window {
   width: min(520px, 100%);
+  max-width: 100%;
+  min-width: 0;
   background: var(--surface-window);
   border: 1px solid var(--border-window);
   box-shadow: var(--bevel-out), 4px 4px 0 #2b1016;
@@ -121,8 +124,9 @@
 }
 
 .dw-statusbar {
-  height: 22px;
+  min-height: 22px;
   display: flex;
+  flex-wrap: wrap; // cells drop to the next row on narrow screens
   align-items: center;
   background: var(--surface-panel);
   border-top: 1px solid var(--border-soft);
@@ -136,7 +140,7 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    height: 100%;
+    height: 22px;
     white-space: nowrap;
     box-shadow:
       inset 1px 1px 0 var(--bevel-sh),
@@ -196,7 +200,7 @@
 
 .uc-title {
   font-family: var(--font-pixel);
-  font-size: 34px;
+  font-size: clamp(24px, 9vw, 34px);
   line-height: 1.15;
 
   .uc-title-spark {
