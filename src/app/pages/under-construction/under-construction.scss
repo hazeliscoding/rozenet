@@ -6,7 +6,9 @@
   // Denwa "roze" theme tokens (subset used by this page)
   --surface-window: #140a0d;
   --surface-panel: #1c0e12;
+  --surface-dialog: #180b0f;
   --surface-inset: #070304;
+  --accent-soft: #2b1016;
   --surface-titlebar: linear-gradient(90deg, #5e1424, #a11f3a);
   --on-titlebar: #ffe0e5;
   --text-primary: #f5e8ea;
@@ -53,7 +55,7 @@
   min-width: 0;
   background: var(--surface-window);
   border: 1px solid var(--border-window);
-  box-shadow: var(--bevel-out), 4px 4px 0 #2b1016;
+  box-shadow: var(--bevel-out), 4px 4px 0 var(--accent-soft);
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -244,6 +246,114 @@
       text-shadow: 0 0 8px rgba(255, 46, 85, 0.55);
     }
   }
+}
+
+// ---- Links dialog ----
+
+.uc-links-btn {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #f2c14e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:hover {
+    color: #ff2e55;
+    text-shadow: 0 0 8px rgba(255, 46, 85, 0.55);
+  }
+}
+
+.uc-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 7, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  z-index: 10;
+}
+
+.uc-dialog {
+  width: min(400px, 100%);
+  background: var(--surface-dialog);
+  box-shadow: var(--bevel-out), 3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+.uc-dialog-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: min(420px, 62vh);
+  overflow: auto;
+  text-align: left;
+}
+
+.uc-links-cat {
+  font: 10px var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 6px 4px;
+}
+
+.uc-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--bevel-out);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--accent-soft);
+    border-color: var(--border-strong);
+  }
+
+  &:active {
+    box-shadow: var(--bevel-in);
+    transform: translate(1px, 1px);
+  }
+}
+
+.uc-link-glyph {
+  color: #f2c14e;
+  flex: none;
+}
+
+.uc-link-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.uc-link-label {
+  color: #f2c14e;
+}
+
+.uc-link-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uc-link-go {
+  font: 10px var(--font-mono);
+  color: var(--text-muted);
+  flex: none;
 }
 
 // ---- Eye animation ----
