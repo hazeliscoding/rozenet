@@ -1,0 +1,159 @@
+<div class="mos rz-desktop">
+  <!-- ===== status bar ===== -->
+  <div class="mos-status">
+    <span class="mos-status__brand">rozenet<span class="mos-status__spark"> ✦</span></span>
+    <span class="mos-status__door">DOOR: LOCKED</span>
+    <span aria-hidden="true">▂▄▆█</span>
+    <span>{{ clock() }}</span>
+  </div>
+
+  @if (app() === null) {
+    <!-- ===== home screen ===== -->
+    <div class="mos-home">
+      <div class="mos-head">
+        <div class="mos-head__mark">roze's den<span class="mos-head__spark"> ✦</span></div>
+        <div class="mos-head__status">DEN STATUS: COMFY · {{ dateLine() }}</div>
+      </div>
+
+      <div class="mos-grid">
+        @for (a of apps; track a.id) {
+          <button class="mos-app" type="button" (click)="openApp(a.id)">
+            <span class="mos-app__tile" [class.mos-app__tile--locked]="a.tag">
+              <dw-icon [name]="a.icon" />
+            </span>
+            <span class="mos-app__label">
+              {{ a.label }}
+              @if (a.tag) {
+                <span class="mos-app__tag">{{ a.tag }}</span>
+              }
+            </span>
+          </button>
+        }
+      </div>
+
+      <button class="dw-btn dw-btn--ghost mos-exit" type="button" (click)="exit()">
+        <dw-icon name="eye" />vn_mode.exe →
+      </button>
+
+      <div class="mos-foot">you were never in control of this page</div>
+    </div>
+  } @else {
+    <!-- ===== app ===== -->
+    <div class="mos-app-view">
+      <div class="dw-titlebar mos-app-view__bar">
+        <dw-icon [name]="current()!.icon" />
+        <span class="dw-tb-title">{{ current()!.title }}</span>
+        <button class="dw-tb-btn mos-close" type="button" aria-label="close" (click)="goHome()">
+          ×
+        </button>
+      </div>
+
+      <div class="mos-app-view__body">
+        @switch (app()) {
+          @case ('directory') {
+            <div class="dw-toolbar mos-toolbar">
+              <label class="visually-hidden" for="mos-search">search the directory</label>
+              <input id="mos-search" class="dw-input mos-search" placeholder="search…" [(ngModel)]="query" />
+              <button
+                class="dw-btn dw-btn--toolbar mos-chip"
+                type="button"
+                [attr.aria-pressed]="category() === null"
+                (click)="setCategory(null)"
+              >
+                all
+              </button>
+              @for (cat of categories(); track cat) {
+                <button
+                  class="dw-btn dw-btn--toolbar mos-chip"
+                  type="button"
+                  [attr.aria-pressed]="category() === cat"
+                  (click)="setCategory(cat)"
+                >
+                  {{ cat }}
+                </button>
+              }
+            </div>
+
+            <table class="dw-table mos-table">
+              <tbody>
+                @for (row of visibleLinks(); track row.label) {
+                  <tr class="clickable" (click)="openLink(row)">
+                    <td class="mos-dir__glyph">{{ row.glyph }}</td>
+                    <td>
+                      <span class="mos-dir__label">{{ row.label }}</span>
+                      <div class="dw-table__desc">{{ row.note }}</div>
+                    </td>
+                    <td class="num mos-dir__action">{{ row.action }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="3" class="mos-dir__empty">nothing matches that.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            <button class="dw-btn dw-btn--ghost mos-full" type="button" (click)="openDirectoryPage()">
+              full page »
+            </button>
+          }
+
+          @case ('control') {
+            <div class="mos-control">
+              <p>a private forum sits behind this door, for invited friends.</p>
+              <p>invites are personal. if we know each other, just ask — she'll mint you a code.</p>
+              <p class="mos-control__aside">if you're meant to be inside, you already know.</p>
+              <button class="dw-btn dw-btn--primary mos-control__go" type="button" (click)="standAtDoor()">
+                stand at the door »
+              </button>
+            </div>
+          }
+
+          @case ('denlog') {
+            <div class="dw-log mos-log">
+              @for (line of log(); track $index) {
+                <div>
+                  <span class="t">{{ line.t }}</span>
+                  <span [class.anom]="line.anomalous">{{ line.message }}</span>
+                </div>
+              }
+              <span class="mos-caret" aria-hidden="true">▌</span>
+            </div>
+          }
+        }
+      </div>
+
+      <div class="dw-statusbar mos-app-view__status">
+        <div>{{ current()!.status[0] }}</div>
+        <div>{{ current()!.status[1] }}</div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== dock ===== -->
+  <div class="mos-dock">
+    <button
+      class="mos-dock__btn mos-dock__btn--den"
+      type="button"
+      [class.mos-dock__btn--on]="app() === null"
+      (click)="goHome()"
+    >
+      ✦ den
+    </button>
+    @for (a of apps; track a.id) {
+      <button
+        class="mos-dock__btn"
+        type="button"
+        [class.mos-dock__btn--on]="isOpen(a.id)"
+        [attr.aria-label]="a.label"
+        (click)="openApp(a.id)"
+      >
+        <dw-icon [name]="a.icon" />
+      </button>
+    }
+  </div>
+
+  @if (toast(); as message) {
+    <div class="rz-toast mos-toast" role="status">{{ message }}</div>
+  }
+</div>

@@ -1,115 +1,165 @@
-<div class="gn-shell fade">
+<div class="rz-page fade">
   @if (view(); as v) {
-    <header class="gn-masthead">
-      <div class="gn-wordmark" style="font-size: 3rem">{{ v.thread.title }}</div>
-      <div class="gn-tagline">
-        ⌂ <a routerLink="/forum">boards</a> »
-        <a [routerLink]="['/forum/b', v.thread.boardSlug]">{{ v.thread.boardTitle }}</a> »
-        <b>thread</b>
+    <p class="rz-crumbs">
+      <a routerLink="/forum">boards</a> »
+      <a [routerLink]="['/forum/b', v.thread.boardSlug]">{{ v.thread.boardTitle }}</a> »
+      <span class="here">thread #{{ postNo(v.thread.id - 1) }}</span>
+    </p>
+
+    <section class="dw-window">
+      <div class="dw-titlebar">
+        <dw-icon name="message" />
+        <span class="dw-tb-title">{{ v.thread.title }}</span>
+        @if (v.thread.sticky) {
+          <span class="dw-badge dw-badge--system" style="margin-right: 6px">pinned</span>
+        }
+        @if (v.thread.locked) {
+          <span class="dw-badge dw-badge--danger" style="margin-right: 6px">locked</span>
+        }
+        <button class="dw-tb-btn" type="button" aria-label="minimize">_</button>
+        <button class="dw-tb-btn" type="button" aria-label="close">×</button>
       </div>
-    </header>
 
-    <div class="gn-counter">
-      <b>{{ v.posts.length }}</b> posts
-      @if (v.thread.locked) { · <span class="gn-newtag gn-newtag--locked">[locked]</span> }
-      @if (v.thread.sticky) { · <span class="gn-newtag">[sticky]</span> }
       @if (v.viewerIsAdmin) {
-        · <a href="#" (click)="$event.preventDefault(); toggleLock()">{{ v.thread.locked ? 'unlock' : 'lock' }}</a>
-        · <a href="#" (click)="$event.preventDefault(); toggleSticky()">{{ v.thread.sticky ? 'unpin' : 'pin' }}</a>
+        <div class="dw-toolbar">
+          <span class="dw-toolbar-label">MOD:</span>
+          <button class="dw-btn dw-btn--toolbar" type="button" (click)="toggleLock()">
+            {{ v.thread.locked ? 'unlock' : 'lock' }}
+          </button>
+          <button class="dw-btn dw-btn--toolbar" type="button" (click)="toggleSticky()">
+            {{ v.thread.sticky ? 'unpin' : 'pin' }}
+          </button>
+        </div>
       }
-    </div>
 
-    <div class="gn-stack">
-      @for (post of v.posts; track post.id; let i = $index) {
-        <section class="gn-panel">
-          <div class="gn-panel__head" [class.gn-panel__head--gold]="i === 0">
-            <span class="gn-panel__glyph">{{ i === 0 ? '★' : '●' }}</span>{{ post.author }}
-            <span class="gn-panel__count">
-              {{ post.createdAt | date: 'MMM d, y, h:mm a' }}@if (post.editedAt) { · edited }
-            </span>
-          </div>
-          <div class="gn-panel__body">
-            @if (editingId() === post.id) {
-              <textarea class="textarea" [(ngModel)]="editBody"></textarea>
-              <div class="post-actions" style="margin-top: 0.8rem">
-                <button class="gn-btn" (click)="saveEdit(post)" [disabled]="busy()">save</button>
-                <button class="gn-btn gn-btn--ghost" (click)="cancelEdit()">cancel</button>
-              </div>
-            } @else {
-              <p class="post-body">{{ post.body }}</p>
-
-              <div class="reaction-row">
-                @for (r of post.reactions; track r.kaomoji) {
-                  <button
-                    class="reaction"
-                    [class.reaction--mine]="r.mine"
-                    (click)="react(post, r.kaomoji)"
-                    [title]="r.mine ? 'remove your reaction' : 'react'"
-                  >
-                    <span class="reaction__kao">{{ r.kaomoji }}</span>
-                    <span class="reaction__n">{{ r.count }}</span>
-                  </button>
-                }
-
-                <span class="reaction-add">
-                  <button class="reaction reaction--add" (click)="togglePicker(post.id)" title="add a reaction">+</button>
-                  @if (pickerId() === post.id) {
-                    <span class="reaction-picker">
-                      @for (kao of palette; track kao) {
-                        <button class="reaction-pick" (click)="react(post, kao)">{{ kao }}</button>
-                      }
-                    </span>
-                  }
-                </span>
-              </div>
-
-              @if (canEdit(post) || canDelete(post)) {
-                <div class="post-actions">
-                  @if (canEdit(post)) {
-                    <a href="#" (click)="$event.preventDefault(); startEdit(post)">edit</a>
-                  }
-                  @if (canDelete(post)) {
-                    <a href="#" class="danger" (click)="$event.preventDefault(); deletePost(post)">
-                      {{ isFirst(post) ? 'delete thread' : 'delete' }}
-                    </a>
-                  }
-                </div>
+      <div class="th-posts">
+        @for (post of v.posts; track post.id; let i = $index) {
+          <article class="th-post">
+            <div class="th-post__who">
+              <div class="th-post__face" aria-hidden="true">{{ initial(post.author) }}</div>
+              <div class="th-post__name">{{ post.author }}</div>
+              @if (i === 0) {
+                <div class="th-post__role">[op]</div>
               }
-            }
+            </div>
+
+            <div class="th-post__body">
+              <div class="th-post__meta">
+                POST #{{ postNo(i) }} · {{ post.createdAt | date: 'yyyy/MM/dd HH:mm:ss' }}
+                @if (post.editedAt) { · edited }
+              </div>
+
+              @if (editingId() === post.id) {
+                <textarea class="dw-input" [(ngModel)]="editBody"></textarea>
+                <div class="th-actions">
+                  <button class="dw-btn dw-btn--sm dw-btn--primary" type="button" (click)="saveEdit(post)" [disabled]="busy()">
+                    save
+                  </button>
+                  <button class="dw-btn dw-btn--sm" type="button" (click)="cancelEdit()">cancel</button>
+                </div>
+              } @else {
+                <p class="th-post__text">{{ post.body }}</p>
+
+                <div class="th-reactions">
+                  @for (r of post.reactions; track r.kaomoji) {
+                    <button
+                      class="dw-btn dw-btn--sm"
+                      [class.th-react--mine]="r.mine"
+                      type="button"
+                      [title]="r.mine ? 'remove your reaction' : 'react'"
+                      (click)="react(post, r.kaomoji)"
+                    >
+                      {{ r.kaomoji }} <span class="th-react__n">{{ r.count }}</span>
+                    </button>
+                  }
+
+                  <span class="th-react-add">
+                    <button
+                      class="dw-btn dw-btn--sm dw-btn--ghost"
+                      type="button"
+                      aria-label="add a reaction"
+                      (click)="togglePicker(post.id)"
+                    >
+                      + react
+                    </button>
+                    @if (pickerId() === post.id) {
+                      <span class="th-picker">
+                        @for (kao of palette; track kao) {
+                          <button class="th-pick" type="button" (click)="react(post, kao)">
+                            {{ kao }}
+                          </button>
+                        }
+                      </span>
+                    }
+                  </span>
+                </div>
+
+                @if (canEdit(post) || canDelete(post)) {
+                  <div class="th-actions th-actions--links">
+                    @if (canEdit(post)) {
+                      <a href="#" (click)="$event.preventDefault(); startEdit(post)">edit</a>
+                    }
+                    @if (canDelete(post)) {
+                      <a
+                        href="#"
+                        class="th-danger"
+                        (click)="$event.preventDefault(); deletePost(post)"
+                        >{{ isFirst(post) ? 'delete thread' : 'delete' }}</a
+                      >
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </article>
+        }
+
+        @if (error(); as message) {
+          <div class="dw-alert dw-alert--error">{{ message }}</div>
+        }
+
+        @if (v.thread.locked) {
+          <div class="dw-panel dw-panel--inset th-locked">
+            this thread is locked ✕
           </div>
-        </section>
-      }
-    </div>
+        } @else {
+          <div class="dw-panel dw-panel--inset th-reply">
+            <div class="th-reply__label">REPLY AS {{ auth.user()?.username }}</div>
+            <form (ngSubmit)="reply()">
+              <label class="visually-hidden" for="reply-body">your reply</label>
+              <textarea
+                id="reply-body"
+                class="dw-input"
+                name="body"
+                [(ngModel)]="replyBody"
+                placeholder="be a good visitor…"
+                required
+              ></textarea>
+              <div class="th-reply__foot">
+                <span class="th-reply__palette">reactions: {{ palette.join(' ') }}</span>
+                <button class="dw-btn dw-btn--primary" type="submit" [disabled]="busy()">
+                  {{ busy() ? 'posting…' : 'post reply' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+      </div>
 
-    @if (error()) { <p class="form-error" style="margin-top: 1.2rem">{{ error() }}</p> }
-
-    @if (v.thread.locked) {
-      <div class="gn-webring">this thread is locked ✕</div>
-    } @else {
-      <section class="gn-panel gn-panel--pop" style="margin-top: 1.6rem">
-        <div class="gn-panel__head">
-          <span class="gn-panel__glyph">✎</span>post a reply
-        </div>
-        <div class="gn-panel__body">
-          <form (ngSubmit)="reply()">
-            <label class="field">
-              <span>signed in as {{ auth.user()?.username }}</span>
-              <textarea class="textarea" name="body" [(ngModel)]="replyBody" required></textarea>
-            </label>
-            <button class="gn-btn" type="submit" [disabled]="busy()">
-              {{ busy() ? 'posting...' : 'post reply' }}
-            </button>
-          </form>
-        </div>
-      </section>
-    }
-
-    <div class="gn-webring">
-      <a [routerLink]="['/forum/b', v.thread.boardSlug]">« back to {{ v.thread.boardTitle }}</a>
-    </div>
-  } @else if (error()) {
-    <section class="gn-panel" style="margin-top: 1.6rem">
-      <div class="gn-panel__body">{{ error() }}</div>
+      <div class="dw-statusbar">
+        <div>THREAD #{{ postNo(v.thread.id - 1) }}</div>
+        <div>{{ v.posts.length }} POST{{ v.posts.length === 1 ? '' : 'S' }}</div>
+        @if (v.thread.sticky) { <div>PINNED</div> }
+        @if (v.thread.locked) { <div>LOCKED</div> }
+      </div>
     </section>
+
+    <div style="margin-top: 20px">
+      <a class="dw-btn dw-btn--ghost" [routerLink]="['/forum/b', v.thread.boardSlug]"
+        >« back to {{ v.thread.boardTitle }}</a
+      >
+    </div>
+  } @else if (error(); as message) {
+    <div class="dw-alert dw-alert--error">{{ message }}</div>
   }
 </div>

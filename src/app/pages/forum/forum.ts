@@ -5,14 +5,16 @@ import { AuthService } from '../../services/auth.service';
 import { ForumService } from '../../services/forum.service';
 import { Board, InviteResult, InviteRow } from '../../services/forum.types';
 import { apiError } from '../../services/errors';
+import { IconComponent } from '../../components/icon';
 
 type Mode = 'login' | 'redeem';
 
 @Component({
   selector: 'forum-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, IconComponent],
   templateUrl: './forum.html',
+  styleUrl: './forum.scss',
 })
 export class ForumPage {
   protected auth = inject(AuthService);

@@ -1,0 +1,341 @@
+// The den — a full-viewport visual novel. Ported from the Rozenet VN Prototype.
+// The dialogue box, nameplate, choice list and boot screen are Denwa's own VN
+// components (.dw-dialogue / .dw-nameplate / .dw-choice / .dw-boot); this file
+// only positions them into a scene.
+
+:host {
+  display: contents;
+}
+
+.vn {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--surface-desktop);
+  color: var(--text-primary);
+  user-select: none;
+}
+
+// ---- boot ----
+.vn-boot {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  padding: 32px;
+  cursor: pointer;
+  overflow: auto;
+
+  &__spark {
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(255, 46, 85, 0.8);
+  }
+
+  &__lines {
+    margin-top: 14px;
+  }
+
+  &__prompt {
+    margin-top: 20px;
+    color: var(--text-system);
+    animation: var(--blink);
+  }
+}
+
+// ---- backdrop ----
+// Denwa asks for real photography in image slots rather than generated art, so
+// until a photo is dropped in the slot names the shot it wants.
+.vn-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--surface-inset) var(--tx-checker);
+  background-size: 8px 8px;
+  display: grid;
+  place-content: center;
+
+  &--door {
+    background-color: #0d0609;
+  }
+
+  // A picked shrine slot, shown like a VN's CG while she talks about it.
+  &--figure {
+    background: var(--surface-desktop);
+  }
+
+  &__hint {
+    font: var(--fs-xs) var(--font-mono);
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    padding: 0 24px;
+    text-align: center;
+  }
+}
+
+// Denwa asks for real photography in 4:3 crops, so the CG is a framed slot
+// naming the shot it wants until one is dropped in.
+.vn-cg {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+
+  &__plate {
+    width: min(62vw, 46vh * 4 / 3);
+    aspect-ratio: 4 / 3;
+    max-height: 52vh;
+    background: var(--surface-inset) var(--tx-checker);
+    background-size: 8px 8px;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--bevel-out), 3px 3px 0 var(--accent-soft);
+    display: grid;
+    place-content: center;
+    font: var(--fs-xs) var(--font-mono);
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  &__meta {
+    font: var(--fs-2xs) var(--font-mono);
+    letter-spacing: 0.08em;
+    color: var(--text-system);
+    text-shadow: 1px 1px 0 #000;
+  }
+}
+
+.vn-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 5, 7, 0.55),
+    rgba(10, 5, 7, 0.18) 30%,
+    rgba(10, 5, 7, 0.68) 74%,
+    rgba(10, 5, 7, 0.93)
+  );
+
+  // Over a CG the veil's job is only to keep the dialogue legible, not to
+  // push the backdrop away — so let the picture through.
+  &--soft {
+    background: linear-gradient(
+      180deg,
+      rgba(10, 5, 7, 0.3),
+      rgba(10, 5, 7, 0) 26%,
+      rgba(10, 5, 7, 0) 58%,
+      rgba(10, 5, 7, 0.72) 84%,
+      rgba(10, 5, 7, 0.93)
+    );
+  }
+}
+
+// ---- header ----
+.vn-head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  pointer-events: none;
+  z-index: 5;
+  text-shadow: 1px 1px 0 #000;
+
+  &__brand {
+    font-family: var(--font-pixel);
+    font-size: var(--fs-xl);
+  }
+
+  &__spark {
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(255, 46, 85, 0.9);
+  }
+
+  &__status {
+    margin-left: auto;
+    font: var(--fs-2xs) var(--font-mono);
+    letter-spacing: 0.1em;
+    color: #ff9db2;
+    text-align: right;
+  }
+}
+
+.vn-vert {
+  position: absolute;
+  top: 56px;
+  right: 26px;
+  writing-mode: vertical-rl;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  letter-spacing: var(--track-xwide);
+  color: #ffd9e0;
+  text-shadow: 1px 1px 0 #000;
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.vn-clicklayer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+}
+
+// ---- scene furniture ----
+.vn-bottom {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  // A re-read passage plus a long choice list can outgrow a short landscape
+  // viewport — scroll the column rather than pushing choices off the top.
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+}
+
+.vn-choices {
+  width: 360px;
+  align-self: flex-end;
+}
+
+.vn-choice--visited {
+  color: var(--text-system);
+}
+
+.vn-choice__mark {
+  font: var(--fs-2xs) var(--font-mono);
+  color: var(--text-system);
+}
+
+.vn-box {
+  cursor: pointer;
+  min-height: 74px;
+}
+
+// An already-read passage, laid out in full rather than retyped line by line.
+.vn-read {
+  display: grid;
+  gap: 8px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.vn-tools {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.vn-tool {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.1em;
+  background: var(--scrim);
+}
+
+// ---- overlay windows ----
+.vn-window {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  max-height: 75vh;
+  overflow: auto;
+
+  &--shrine {
+    top: 52%;
+    width: min(640px, calc(100vw - 24px));
+  }
+
+  &--log {
+    top: 50%;
+    width: min(560px, calc(100vw - 24px));
+  }
+
+}
+
+.vn-slots {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.vn-slot {
+  &__text {
+    min-width: 0;
+  }
+
+  &__title {
+    display: block;
+    font-weight: 600;
+    font-size: var(--fs-sm);
+  }
+
+  &__meta {
+    display: block;
+    font: var(--fs-2xs) var(--font-mono);
+    color: var(--text-system);
+  }
+}
+
+.vn-log {
+  padding: 14px;
+  max-height: 300px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+
+  &__row {
+    border-bottom: 1px dotted var(--border-soft);
+    padding-bottom: 6px;
+  }
+
+  &__who {
+    font: var(--fs-2xs) var(--font-mono);
+    color: var(--text-system);
+  }
+
+  &__line {
+    font-family: var(--font-serif);
+    line-height: 1.8;
+  }
+
+  &__empty {
+    color: var(--text-muted);
+    font-size: var(--fs-sm);
+  }
+}
+
+// The look comes from the global .rz-toast; it just sits above the dialogue.
+.vn-toast {
+  bottom: 200px;
+  z-index: 9;
+}
+
+// ---- portrait VN layout on narrow screens ----
+@media screen and (max-width: 700px) {
+  .vn-choices {
+    width: 100%;
+    align-self: stretch;
+
+    // portrait VN: full-width taps, as the prototype sized them
+    button {
+      min-height: 48px;
+    }
+  }
+
+  .vn-vert {
+    right: 10px;
+    font-size: 13px;
+  }
+
+  .vn-toast {
+    bottom: 240px;
+  }
+}

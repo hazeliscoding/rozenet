@@ -1,0 +1,187 @@
+// Thread view — the ROZE-OS post rows: a bordered author column beside the body.
+
+.th-posts {
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.th-post {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  border: 1px solid var(--border-soft);
+
+  &__who {
+    background: var(--surface-panel);
+    border-right: 1px solid var(--border-soft);
+    padding: 12px;
+    text-align: center;
+  }
+
+  &__face {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface-inset);
+    display: grid;
+    place-content: center;
+    font-family: var(--font-pixel);
+    font-size: 22px;
+    color: var(--text-system);
+  }
+
+  &__name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  &__role {
+    font: var(--fs-2xs) var(--font-mono);
+    color: var(--text-system);
+  }
+
+  &__body {
+    padding: 12px 14px;
+    min-width: 0;
+  }
+
+  &__meta {
+    font: var(--fs-2xs) var(--font-mono);
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  &__text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  @media screen and (max-width: 560px) {
+    grid-template-columns: 1fr;
+
+    &__who {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+      border-right: none;
+      border-bottom: 1px solid var(--border-soft);
+      padding: 8px 12px;
+    }
+
+    &__face {
+      width: 32px;
+      height: 32px;
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+}
+
+// ---- reactions ----
+.th-reactions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.th-react--mine {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: #ff9db2;
+}
+
+.th-react__n {
+  font-family: var(--font-mono);
+  color: var(--text-system);
+}
+
+.th-react-add {
+  position: relative;
+  display: inline-flex;
+}
+
+.th-picker {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  z-index: var(--z-menu, 100);
+  display: flex;
+  gap: 2px;
+  background: var(--surface-window);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--bevel-out), var(--shadow-dialog);
+  padding: 3px;
+}
+
+.th-pick {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  padding: 4px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--surface-selected);
+    color: var(--on-selected);
+  }
+}
+
+// ---- actions ----
+.th-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+
+  &--links {
+    gap: 12px;
+    font-size: var(--fs-xs);
+  }
+}
+
+.th-danger {
+  color: var(--danger);
+
+  &:hover {
+    color: var(--danger);
+  }
+}
+
+// ---- reply / locked ----
+.th-reply {
+  padding: 12px 14px;
+
+  &__label {
+    font: var(--fs-2xs) var(--font-mono);
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  &__foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  &__palette {
+    font: var(--fs-2xs) var(--font-mono);
+    color: var(--text-muted);
+  }
+}
+
+.th-locked {
+  padding: 12px 14px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}

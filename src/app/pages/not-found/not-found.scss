@@ -1,0 +1,44 @@
+// 404 — the one screen where Denwa's denpa palette surfaces. Anomaly colours
+// are rare by design, which is what makes them read as significant here.
+
+.nf-page {
+  padding-top: 48px;
+}
+
+.nf-window {
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.nf-titlebar {
+  background: linear-gradient(90deg, #3e1038, #8a1e6e);
+}
+
+.nf-body {
+  padding: 24px;
+  text-align: center;
+}
+
+.nf-code {
+  font-family: var(--font-pixel);
+  font-size: clamp(40px, 16vw, 56px);
+  line-height: 1;
+  color: var(--signal-anomaly);
+  text-shadow: 0 0 14px rgba(255, 43, 214, 0.5);
+}
+
+.nf-signal {
+  font: var(--fs-xs) var(--font-mono);
+  color: var(--signal-anomaly);
+  margin: 8px 0 14px;
+}
+
+.nf-aside {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font: var(--fs-xs) var(--font-mono);
+}
+
+.nf-dot {
+  background: var(--status-corrupted);
+}

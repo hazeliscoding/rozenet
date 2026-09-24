@@ -1,0 +1,268 @@
+// ROZE-OS — the den's desktop. Window chrome comes from the global dw-*
+// classes; this file is the desktop itself: icons, placement, taskbar.
+
+:host {
+  display: contents;
+}
+
+.os {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+// ---- wordmark ----
+.os-mark {
+  position: absolute;
+  top: 44px;
+  right: 48px;
+  font-family: var(--font-pixel);
+  font-size: clamp(24px, 6vw, 44px);
+  text-align: right;
+  line-height: 1.1;
+  pointer-events: none;
+
+  &__spark {
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(255, 46, 85, 0.7);
+  }
+
+  &__status {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+}
+
+// ---- icons ----
+.os-icons {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: grid;
+  gap: 16px;
+  width: 92px;
+  z-index: 1;
+}
+
+.os-icon {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 6px 2px;
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+
+  dw-icon .dw-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--text-system);
+  }
+
+  &:hover {
+    border-color: var(--border-soft);
+    background: var(--accent-soft);
+  }
+
+  &__label {
+    font-size: var(--fs-xs);
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  &__tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--danger);
+  }
+}
+
+// ---- windows ----
+.os-win {
+  position: absolute;
+  max-width: calc(100vw - 16px);
+
+  &--directory {
+    width: 720px;
+  }
+
+  &--control {
+    width: 460px;
+  }
+
+  &--denlog {
+    width: 420px;
+  }
+}
+
+.os-drag {
+  cursor: move;
+  touch-action: none;
+}
+
+.os-search {
+  width: 200px;
+  min-height: 22px;
+  font-size: var(--fs-xs);
+}
+
+// ---- directory rows ----
+.os-dir {
+  &__glyph {
+    color: var(--accent);
+    text-align: center;
+  }
+
+  &__label {
+    color: var(--text-link);
+  }
+
+  &__note {
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+  }
+
+  &__action {
+    color: var(--text-system);
+  }
+
+  &__empty {
+    padding: 16px;
+    color: var(--text-muted);
+  }
+}
+
+.os-link {
+  font: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--text-link-hover);
+  }
+}
+
+// ---- control room ----
+.os-control {
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+  font-size: var(--fs-sm);
+
+  &__aside {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+  }
+
+  &__go {
+    justify-self: start;
+  }
+}
+
+// ---- den.log ----
+.os-log {
+  border: none;
+  box-shadow: none;
+  height: 132px;
+  overflow: auto;
+
+  // Angular collapses the whitespace between the timestamp and the message.
+  .t {
+    margin-right: 6px;
+  }
+}
+
+.os-caret {
+  animation: var(--blink);
+}
+
+// ---- start menu ----
+.os-menu {
+  position: absolute;
+  left: 6px;
+  bottom: 34px;
+  z-index: 9000;
+  width: 208px;
+}
+
+// ---- taskbar ----
+.os-taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface-panel);
+  border-top: 1px solid var(--border-strong);
+  padding: 3px 4px;
+  z-index: 8000;
+  overflow-x: auto;
+
+  &__sep {
+    width: 1px;
+    height: 18px;
+    flex: none;
+    background: var(--border-soft);
+    margin: 0 4px;
+  }
+
+  &__clock {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    padding: 0 8px;
+    white-space: nowrap;
+  }
+}
+
+.os-start {
+  font-family: var(--font-pixel);
+  flex: none;
+}
+
+.os-task {
+  flex: none;
+  box-shadow: var(--bevel-in);
+
+  &--min {
+    box-shadow: var(--bevel-out);
+    color: var(--text-muted);
+  }
+}
+
+.os-heart {
+  color: var(--accent);
+}
+
+.os-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  transform: translateX(-50%);
+  z-index: 9500;
+  background: var(--surface-window);
+  border: 1px solid var(--border-strong);
+  box-shadow: 3px 3px 0 var(--accent-soft);
+  padding: 8px 18px;
+  font-size: var(--fs-sm);
+}
+
+// Narrow screens get the mobile shell instead of floating windows, so there's
+// no stacked fallback here — .os-win's max-width is the only safety net.

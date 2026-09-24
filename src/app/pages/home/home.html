@@ -1,90 +1,145 @@
-<div class="gn-shell fade">
-  <header class="gn-masthead">
-    <div class="gn-wordmark">roze's den<span class="gn-spark"> ✦</span></div>
-    <div class="gn-tagline">anime, games, and cute things on the internet — no work talk past this door</div>
-  </header>
+<div class="vn" (window:keydown)="onKeydown($event)">
+  @if (booting()) {
+    <!-- ===== boot ===== -->
+    <div class="dw-boot vn-boot" (click)="finishBoot()" role="button" tabindex="0" aria-label="start">
+      <div class="dw-boot__logo">rozenet<span class="vn-boot__spark"> ✦</span></div>
+      <div class="vn-boot__lines">
+        @for (line of bootLines(); track line) {
+          <div>{{ line }}</div>
+        }
+      </div>
+      <div class="vn-boot__prompt">PRESS ANY KEY — クリックして開始</div>
+    </div>
+  }
 
-  <div class="gn-counter">den status: <b>comfy</b> · the door was already open when you got here</div>
-
-  <div class="gn-cols gn-cols--left">
-    <aside class="gn-stack">
-      <section class="gn-panel gn-panel--pop">
-        <div class="gn-panel__head">
-          <span class="gn-panel__glyph">★</span>member profile
-        </div>
-        <div class="gn-panel__body">
-          <img class="gn-avatar" src="assets/avatar.jpg" alt="roze's avatar" />
-          <div class="gn-handle">roze</div>
-          <div class="gn-role"><span class="gn-newtag">[angel]</span> &#64;RozeAngel · she/they</div>
-
-          <table class="gn-stat-table">
-            <tbody>
-              <tr><td>watching</td><td>too much</td></tr>
-              <tr><td>backlog</td><td>eternal</td></tr>
-              <tr><td>figures</td><td>growing</td></tr>
-              <tr><td>contracts signed</td><td>???</td></tr>
-            </tbody>
-          </table>
-
-          <div style="margin-top: 1.2rem">
-            <a class="gn-btn gn-btn--block" routerLink="/links">browse the directory</a>
-            <div style="height: 0.6rem"></div>
-            <a class="gn-btn gn-btn--ghost gn-btn--block" routerLink="/forum">knock on the forum</a>
-          </div>
-        </div>
-      </section>
-
-      <section class="gn-panel">
-        <div class="gn-panel__head gn-panel__head--gold">
-          <span class="gn-panel__glyph">✧</span>interests
-        </div>
-        <div class="gn-panel__body">
-          <div class="gn-tags">
-            <span class="gn-tag">anime</span>
-            <span class="gn-tag">manga</span>
-            <span class="gn-tag gn-tag--gold">figures</span>
-            <span class="gn-tag">games</span>
-            <span class="gn-tag gn-tag--gold">web toys</span>
-          </div>
-        </div>
-      </section>
-    </aside>
-
-    <main class="gn-stack">
-      <section class="gn-panel">
-        <div class="gn-panel__head gn-panel__head--gold">
-          <span class="gn-panel__glyph">»</span>about the den
-        </div>
-        <div class="gn-panel__body">
-          <p>
-            hi, i'm roze. software developer by day — but that's the other website.
-            this one is for everything else: the anime i'm watching, the games i'm
-            not finishing, the figures i absolutely did not need, and the little
-            web toys i build for fun.
-          </p>
-          <p>
-            pull up a cushion. dead links get pruned, lurkers are welcome,
-            and the guestbook never judges.
-          </p>
-          <div class="gn-quote">$ currently: lurking with intent</div>
-        </div>
-      </section>
-
-      <section class="gn-panel">
-        <div class="gn-panel__head">
-          <span class="gn-panel__glyph">✕</span>the control room
-          <span class="gn-panel__count">members only</span>
-        </div>
-        <div class="gn-panel__body">
-          <p>
-            there's a private forum behind this door for invited friends.
-            if you're meant to be in it, you already know.
-            <span class="gn-newtag gn-newtag--locked">[locked]</span>
-          </p>
-          <a class="gn-btn" routerLink="/forum">stand at the door »</a>
-        </div>
-        <div class="gn-sig">sig: "be a good visitor and nothing bad will happen ♥"</div>
-      </section>
-    </main>
+  <!-- ===== backdrop ===== -->
+  <div
+    class="vn-bg"
+    [class.vn-bg--door]="scene().bg === 'door'"
+    [class.vn-bg--figure]="scene().bg === 'figure'"
+  >
+    @if (figure(); as fig) {
+      <figure class="vn-cg fade">
+        <div class="vn-cg__plate">{{ fig.file }}</div>
+        <figcaption class="vn-cg__meta">{{ fig.meta }}</figcaption>
+      </figure>
+    } @else {
+      <span class="vn-bg__hint">{{ backdropHint() }}</span>
+    }
   </div>
+  <div class="vn-veil tx-scanlines" [class.vn-veil--soft]="scene().bg === 'figure'"></div>
+
+  <!-- ===== header ===== -->
+  <header class="vn-head">
+    <span class="vn-head__brand">rozenet<span class="vn-head__spark"> ✦</span></span>
+    <span class="vn-head__status">{{ statusLine() }}</span>
+  </header>
+  <div class="vn-vert" aria-hidden="true">{{ scene().vert }}</div>
+
+  <!-- ===== click-to-advance layer ===== -->
+  <div class="vn-clicklayer" (click)="advance()" aria-hidden="true"></div>
+
+  <!-- ===== choices + dialogue ===== -->
+  <div class="vn-bottom">
+    @if (choicesShown() && !shrineShown() && !logShown() && !desktopShown()) {
+      <div class="dw-choice vn-choices">
+        @for (choice of choices(); track choice.label) {
+          <button
+            [class.vn-choice--visited]="choice.visited"
+            type="button"
+            (click)="choice.run()"
+          >
+            ▸ {{ choice.label }}<span class="vn-choice__mark">{{ choice.mark }}</span>
+          </button>
+        }
+      </div>
+    }
+
+    <div>
+      <span class="dw-nameplate">{{ scene().name }}</span>
+      <div class="dw-dialogue vn-box" (click)="advance()">
+        @if (revisited()) {
+          <div class="vn-read">
+            @for (line of scene().lines; track $index) {
+              <p class="dw-vn-text">{{ line }}</p>
+            }
+          </div>
+        } @else {
+          <p class="dw-vn-text">{{ typedText() }}</p>
+        }
+        @if (advanceShown()) {
+          <span class="dw-vn-adv" aria-hidden="true">▼</span>
+        }
+      </div>
+      <div class="vn-tools">
+        <button class="dw-btn dw-btn--toolbar vn-tool" type="button" (click)="toggleLog()">LOG</button>
+        <button class="dw-btn dw-btn--toolbar vn-tool" type="button" (click)="saveGame()">SAVE 保存</button>
+        <button class="dw-btn dw-btn--toolbar vn-tool" type="button" (click)="goTitle()">TITLE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ROZE-OS ===== -->
+  @if (desktopShown()) {
+    @if (isMobile()) {
+      <roze-mobile (closed)="closeDesktop()" (door)="desktopToDoor()" />
+    } @else {
+      <roze-desktop (closed)="closeDesktop()" (door)="desktopToDoor()" />
+    }
+  }
+
+  <!-- ===== shrine (save/load screen) ===== -->
+  @if (shrineShown()) {
+    <div class="dw-window vn-window vn-window--shrine" role="dialog" aria-label="shrine">
+      <div class="dw-titlebar">
+        <dw-icon name="image" />
+        <span class="dw-tb-title">shrine — SAVE DATA</span>
+        <button class="dw-tb-btn" type="button" aria-label="close" (click)="closeShrine()">×</button>
+      </div>
+      <div class="vn-slots">
+        @for (slot of slots; track slot.id) {
+          <button
+            class="dw-saveslot"
+            type="button"
+            [attr.aria-selected]="figSel() === slot.id"
+            (click)="pickSlot(slot)"
+          >
+            <span class="dw-thumb">{{ slot.file }}</span>
+            <span class="vn-slot__text">
+              <span class="vn-slot__title">{{ slot.title }}</span>
+              <span class="vn-slot__meta">{{ slot.meta }}</span>
+            </span>
+          </button>
+        }
+      </div>
+      <div class="dw-statusbar">
+        <div>3 FILES RECOVERED</div>
+        <div>click a slot — she'll tell you about it</div>
+      </div>
+    </div>
+  }
+
+  <!-- ===== backlog ===== -->
+  @if (logShown()) {
+    <div class="dw-window vn-window vn-window--log" role="dialog" aria-label="backlog">
+      <div class="dw-titlebar dw-titlebar--inactive">
+        <span class="dw-tb-title">backlog — 履歴</span>
+        <button class="dw-tb-btn" type="button" aria-label="close" (click)="toggleLog()">×</button>
+      </div>
+      <div class="vn-log">
+        @for (entry of backlog(); track $index) {
+          <div class="vn-log__row">
+            <span class="vn-log__who">{{ entry.who }}</span>
+            <div class="vn-log__line">{{ entry.line }}</div>
+          </div>
+        } @empty {
+          <p class="vn-log__empty">nothing read yet.</p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (toast(); as message) {
+    <div class="rz-toast vn-toast" role="status">{{ message }}</div>
+  }
 </div>

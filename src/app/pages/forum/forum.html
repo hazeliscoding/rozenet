@@ -1,177 +1,291 @@
-<div class="gn-shell fade">
-  <header class="gn-masthead">
-    <div class="gn-wordmark">the control room<span class="gn-spark"> ✦</span></div>
-    <div class="gn-tagline">a private forum for invited friends</div>
-  </header>
+<div class="rz-page fade">
+  <h1 class="rz-title">the control room<span class="rz-spark"> ✦</span></h1>
+  <p class="rz-tagline">a private forum for invited friends</p>
 
   @if (auth.user(); as me) {
-    <!-- ===== signed in: boards ===== -->
-    <div class="gn-counter">
-      signed in as <b>{{ me.username }}</b>@if (me.isAdmin) { <span class="gn-newtag">[mod]</span> } ·
-      <a href="#" (click)="$event.preventDefault(); logout()">log out</a>
-    </div>
+    <!-- ================= signed in: boards ================= -->
+    <p class="rz-status">
+      signed in as <b>{{ me.username }}</b>@if (me.isAdmin) { · <b>[mod]</b> }
+    </p>
 
-    <section class="gn-panel gn-panel--pop">
-      <div class="gn-panel__head">
-        <span class="gn-panel__glyph">⌂</span>boards
-        <span class="gn-panel__count">{{ boards().length }} rooms</span>
-      </div>
-      <table class="gn-table">
-        <tbody>
-          @for (board of boards(); track board.slug) {
-            <tr class="clickable" [routerLink]="['/forum/b', board.slug]">
-              <td class="gn-mark gn-mark--new">{{ board.glyph }}</td>
-              <td>
-                <a [routerLink]="['/forum/b', board.slug]" (click)="$event.stopPropagation()">{{ board.title }}</a>
-                <div class="gn-table__desc">{{ board.description }}</div>
-              </td>
-              <td class="gn-table__meta">
-                <span class="gn-mono">{{ board.threads }}</span> threads<br />
-                <span class="gn-mono">{{ board.posts }}</span> posts
-              </td>
-            </tr>
-          } @empty {
-            <tr><td colspan="3" style="padding: 1.2rem">no boards yet.</td></tr>
-          }
-        </tbody>
-      </table>
-      <div class="gn-sig">sig: "be a good visitor and nothing bad will happen ♥"</div>
-    </section>
-
-    @if (error()) {
-      <p class="gn-tagline" style="color: var(--danger); margin-top: 1.2rem">{{ error() }}</p>
-    }
-
-    @if (me.isAdmin) {
-      <section class="gn-panel" style="margin-top: 1.6rem">
-        <div class="gn-panel__head gn-panel__head--gold">
-          <span class="gn-panel__glyph">✉</span>invite a friend
-          <span class="gn-panel__count">the leash</span>
+    <div class="rz-stack" style="margin-top: 16px">
+      <section class="dw-window">
+        <div class="dw-titlebar">
+          <dw-icon name="message" />
+          <span class="dw-tb-title"
+            >boards — {{ boards().length }} room{{ boards().length === 1 ? '' : 's' }}</span
+          >
+          <button class="dw-tb-btn" type="button" aria-label="minimize">_</button>
+          <button class="dw-tb-btn" type="button" aria-label="close">×</button>
         </div>
-        <div class="gn-panel__body">
-          <form (ngSubmit)="sendEmailInvite()" class="invite-form">
-            <input class="input" name="inviteEmail" type="email" [(ngModel)]="inviteEmail"
-              placeholder="friend@example.com" autocomplete="off" />
-            <button class="gn-btn" type="submit" [disabled]="inviteBusy()">
-              {{ inviteBusy() ? 'sending...' : 'email invite' }}
-            </button>
-            <button class="gn-btn gn-btn--ghost" type="button" (click)="mintCode()" [disabled]="inviteBusy()">
-              just mint a code
-            </button>
-          </form>
 
-          @if (inviteError()) { <p class="form-error" style="margin-top: 0.8rem">{{ inviteError() }}</p> }
+        <table class="dw-table">
+          <thead>
+            <tr>
+              <th style="width: 30px"></th>
+              <th>board</th>
+              <th style="width: 90px; text-align: right">threads</th>
+              <th style="width: 90px; text-align: right">posts</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (board of boards(); track board.slug) {
+              <tr class="clickable" [routerLink]="['/forum/b', board.slug]">
+                <td style="color: var(--accent); text-align: center">{{ board.glyph }}</td>
+                <td>
+                  <a [routerLink]="['/forum/b', board.slug]" (click)="$event.stopPropagation()">{{
+                    board.title
+                  }}</a>
+                  <div class="dw-table__desc">{{ board.description }}</div>
+                </td>
+                <td class="num" style="color: var(--text-system)">{{ board.threads }}</td>
+                <td class="num" style="color: var(--text-system)">{{ board.posts }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4" style="padding: 16px; color: var(--text-muted)">no boards yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
 
-          @if (inviteResult(); as res) {
-            <div class="invite-result">
-              <div>
-                @if (res.emailed) {
-                  <span class="gn-newtag">[sent ♥]</span> emailed the invite.
-                } @else {
-                  <span class="gn-newtag gn-newtag--locked">[not emailed]</span>
-                  no mail server configured — share this link yourself:
-                }
-              </div>
-              <code class="invite-link">{{ res.link }}</code>
-              <button class="gn-btn gn-btn--gold" type="button" (click)="copyLink()">
-                {{ copied() ? 'copied!' : 'copy link' }}
-              </button>
-            </div>
-          }
-
-          @if (invites().length) {
-            <table class="gn-table" style="margin-top: 1.2rem">
-              <tbody>
-                @for (inv of invites(); track inv.code) {
-                  <tr>
-                    <td><span class="gn-mono">{{ inv.code }}</span></td>
-                    <td class="gn-table__desc">{{ inv.invitedEmail || '—' }}</td>
-                    <td class="gn-table__meta">
-                      @if (inv.redeemedBy) {
-                        <span style="color: var(--gold-600)">{{ inv.redeemedBy }}</span>
-                      } @else { <span>unused</span> }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          }
+        <div class="dw-statusbar">
+          <div>{{ boards().length }} ROOM{{ boards().length === 1 ? '' : 'S' }}</div>
+          <div>MEMBERS: CLASSIFIED</div>
+          <div>sig: "be a good visitor and nothing bad will happen ♥"</div>
         </div>
       </section>
-    }
-  } @else {
-    <!-- ===== signed out: gate ===== -->
-    <div class="gn-counter">door status: <b>locked</b> · members inside: classified</div>
 
-    <div class="gn-cols gn-cols--right">
-      <main class="gn-stack">
-        <section class="gn-panel gn-panel--pop">
-          <div class="gn-panel__head">
-            <span class="gn-panel__glyph">✕</span>
-            {{ mode() === 'redeem' ? 'redeem an invite' : 'sign in' }}
-            <span class="gn-panel__count">[members only]</span>
+      @if (error(); as message) {
+        <div class="dw-alert dw-alert--error">{{ message }}</div>
+      }
+
+      @if (me.isAdmin) {
+        <section class="dw-window">
+          <div class="dw-titlebar">
+            <dw-icon name="lock" />
+            <span class="dw-tb-title">invite a friend — the leash</span>
+            <span class="dw-tb-note">ADMIN</span>
+            <button class="dw-tb-btn" type="button" aria-label="close">×</button>
           </div>
-          <div class="gn-panel__body">
-            @if (mode() === 'redeem' && code) {
-              <p class="gn-tagline" style="margin-bottom: 1.2rem">
-                someone left the door open for you ♥ pick a name and you're in.
-              </p>
-            }
-            <form (ngSubmit)="submit()">
-              @if (mode() === 'redeem') {
-                <label class="field">
-                  <span>invite code</span>
-                  <input class="input" name="code" [(ngModel)]="code" placeholder="XXXX-XXXX-XXXX" autocomplete="off" required />
-                </label>
-              }
-              <label class="field">
-                <span>name</span>
-                <input class="input" name="username" [(ngModel)]="username" autocomplete="username" required />
-              </label>
-              <label class="field">
-                <span>password</span>
-                <input class="input" name="password" type="password" [(ngModel)]="password" autocomplete="current-password" required />
-              </label>
 
-              @if (error()) {
-                <p class="form-error">{{ error() }}</p>
-              }
-
-              <button class="gn-btn gn-btn--block" type="submit" [disabled]="busy()">
-                {{ busy() ? 'knocking...' : (mode() === 'redeem' ? 'enter the den' : 'sign in') }}
+          <div style="padding: 14px 16px">
+            <form (ngSubmit)="sendEmailInvite()" class="rz-invite-form">
+              <label class="visually-hidden" for="invite-email">friend's email</label>
+              <input
+                id="invite-email"
+                class="dw-input"
+                style="width: 280px"
+                name="inviteEmail"
+                type="email"
+                [(ngModel)]="inviteEmail"
+                placeholder="friend@example.com"
+                autocomplete="off"
+              />
+              <button class="dw-btn dw-btn--primary" type="submit" [disabled]="inviteBusy()">
+                {{ inviteBusy() ? 'sending…' : 'email invite' }}
+              </button>
+              <button class="dw-btn" type="button" (click)="mintCode()" [disabled]="inviteBusy()">
+                just mint a code
               </button>
             </form>
 
-            <p class="switch">
-              @if (mode() === 'redeem') {
-                already a member?
-                <a href="#" (click)="$event.preventDefault(); setMode('login')">sign in</a>
-              } @else {
-                got an invite code?
-                <a href="#" (click)="$event.preventDefault(); setMode('redeem')">redeem it</a>
-              }
+            @if (inviteError(); as message) {
+              <div class="dw-alert dw-alert--error" style="margin-top: 12px">{{ message }}</div>
+            }
+
+            @if (inviteResult(); as res) {
+              <div class="dw-panel dw-panel--inset rz-invite-result">
+                @if (res.emailed) {
+                  <span class="dw-badge dw-badge--system">sent ♥</span>
+                  <span class="rz-invite-note">emailed the invite.</span>
+                } @else {
+                  <span class="dw-badge dw-badge--warning">not emailed</span>
+                  <span class="rz-invite-note"
+                    >no mail server configured — share this link yourself:</span
+                  >
+                }
+                <code class="rz-invite-link">{{ res.link }}</code>
+                <button class="dw-btn dw-btn--sm" type="button" (click)="copyLink()">
+                  {{ copied() ? 'copied!' : 'copy link' }}
+                </button>
+              </div>
+            }
+
+            @if (invites().length) {
+              <table class="dw-table" style="margin-top: 12px">
+                <thead>
+                  <tr>
+                    <th>code</th>
+                    <th>emailed to</th>
+                    <th style="text-align: right">redeemed by</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (inv of invites(); track inv.code) {
+                    <tr>
+                      <td class="num" style="text-align: left">{{ inv.code }}</td>
+                      <td style="color: var(--text-muted)">{{ inv.invitedEmail || '—' }}</td>
+                      <td class="num">
+                        @if (inv.redeemedBy) {
+                          <span style="color: var(--text-system)">{{ inv.redeemedBy }}</span>
+                        } @else {
+                          <span style="color: var(--text-muted)">unused</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+
+          <div class="dw-statusbar">
+            <div>INVITES: SINGLE-USE</div>
+            <div>the leash remembers who it let in</div>
+          </div>
+        </section>
+      }
+    </div>
+  } @else {
+    <!-- ================= signed out: the gate ================= -->
+    <p class="rz-status">DOOR STATUS: <b class="locked">LOCKED</b> · MEMBERS INSIDE: CLASSIFIED</p>
+
+    <div class="rz-cols rz-cols--gate" style="margin-top: 16px">
+      <section class="dw-window" style="max-width: 520px">
+        <div class="dw-titlebar">
+          <dw-icon name="lock" />
+          <span class="dw-tb-title">access — control_room.exe</span>
+          <span class="dw-tb-note">[MEMBERS ONLY]</span>
+          <button class="dw-tb-btn" type="button" aria-label="close">×</button>
+        </div>
+
+        <div style="padding: 16px">
+          <div class="dw-seg" style="margin-bottom: 14px">
+            <button
+              type="button"
+              [attr.aria-pressed]="mode() === 'redeem'"
+              (click)="setMode('redeem')"
+            >
+              redeem an invite
+            </button>
+            <button
+              type="button"
+              [attr.aria-pressed]="mode() === 'login'"
+              (click)="setMode('login')"
+            >
+              sign in
+            </button>
+          </div>
+
+          @if (mode() === 'redeem' && code) {
+            <p style="margin-bottom: 12px; color: var(--text-muted); font-size: 12px">
+              someone left the door open for you ♥ pick a name and you're in.
             </p>
-          </div>
-        </section>
-      </main>
+          }
 
-      <aside class="gn-stack">
-        <section class="gn-panel">
-          <div class="gn-panel__head gn-panel__head--gold">
-            <span class="gn-panel__glyph">★</span>want in?
+          <form (ngSubmit)="submit()" style="display: grid; gap: 10px">
+            @if (mode() === 'redeem') {
+              <div class="dw-field">
+                <label for="gate-code">invite code</label>
+                <input
+                  id="gate-code"
+                  class="dw-input"
+                  name="code"
+                  [(ngModel)]="code"
+                  placeholder="XXXX-XXXX-XXXX"
+                  autocomplete="off"
+                  required
+                />
+                <span class="dw-hint">single-use. personal. the leash remembers.</span>
+              </div>
+            }
+
+            <div class="dw-field">
+              <label for="gate-name">name</label>
+              <input
+                id="gate-name"
+                class="dw-input"
+                name="username"
+                [(ngModel)]="username"
+                autocomplete="username"
+                required
+              />
+            </div>
+
+            <div class="dw-field">
+              <label for="gate-pass">password</label>
+              <input
+                id="gate-pass"
+                class="dw-input"
+                name="password"
+                type="password"
+                [(ngModel)]="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+
+            @if (error(); as message) {
+              <div class="dw-alert dw-alert--error">{{ message }}</div>
+            }
+
+            <button class="dw-btn dw-btn--primary" type="submit" [disabled]="busy()">
+              {{ busy() ? 'knocking…' : mode() === 'redeem' ? 'enter the den' : 'sign in' }}
+            </button>
+          </form>
+
+          <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted)">
+            @if (mode() === 'redeem') {
+              already a member?
+              <a href="#" (click)="$event.preventDefault(); setMode('login')">sign in</a>
+            } @else {
+              got an invite code?
+              <a href="#" (click)="$event.preventDefault(); setMode('redeem')">redeem it</a>
+            }
+          </p>
+        </div>
+
+        <div class="dw-statusbar">
+          <div>AUTH: PBKDF2</div>
+          <div>SESSION: 30 DAYS</div>
+          <div>接続中…</div>
+        </div>
+      </section>
+
+      <div class="rz-stack">
+        <section class="dw-window">
+          <div class="dw-titlebar dw-titlebar--inactive">
+            <span class="dw-tb-title">want in?</span>
+            <button class="dw-tb-btn" type="button" aria-label="close">×</button>
           </div>
-          <div class="gn-panel__body">
-            <p>invites are personal. if we know each other, just ask — i'll mint you a code.</p>
-            <a class="gn-btn gn-btn--block" href="mailto:hazel.granados@protonmail.com?subject=rozenet%20invite%3F">request an invite</a>
+          <div style="padding: 12px 14px">
+            <p style="margin-bottom: 10px; font-size: 12px">
+              invites are personal. if we know each other, just ask — i'll mint you a code.
+            </p>
+            <a
+              class="dw-btn dw-btn--block"
+              href="mailto:hazel.granados&#64;protonmail.com?subject=rozenet%20invite%3F"
+              >request an invite</a
+            >
           </div>
         </section>
 
-        <section class="gn-panel">
-          <div class="gn-panel__body">
-            <a class="gn-btn gn-btn--ghost gn-btn--block" routerLink="/">« back to the den</a>
+        <section class="dw-window">
+          <div class="dw-titlebar dw-titlebar--inactive">
+            <span class="dw-tb-title">door.log</span>
+            <button class="dw-tb-btn" type="button" aria-label="close">×</button>
+          </div>
+          <div class="dw-log" style="border: none; box-shadow: none">
+            <span class="t">[02:14]</span> knock detected<br />
+            <span class="t">[02:14]</span> identity: unverified<br />
+            <span class="t">[02:15]</span> door: locked<br />
+            <span class="anom">if you're meant to be inside,<br />you already know.</span>
           </div>
         </section>
-      </aside>
+
+        <a class="dw-btn dw-btn--ghost dw-btn--block" routerLink="/">« back to the den</a>
+      </div>
     </div>
   }
 </div>

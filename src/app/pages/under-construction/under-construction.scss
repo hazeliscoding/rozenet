@@ -1,34 +1,8 @@
-// Ported from the Denwa design system "Under Construction" page (roze theme).
-// Fonts load with this lazy chunk only, so dev builds never fetch them.
-@import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap');
-
-:host {
-  // Denwa "roze" theme tokens (subset used by this page)
-  --surface-window: #140a0d;
-  --surface-panel: #1c0e12;
-  --surface-dialog: #180b0f;
-  --surface-inset: #070304;
-  --accent-soft: #2b1016;
-  --surface-titlebar: linear-gradient(90deg, #5e1424, #a11f3a);
-  --on-titlebar: #ffe0e5;
-  --text-primary: #f5e8ea;
-  --text-muted: #b0888f;
-  --text-system: #f2c14e;
-  --accent: #ff2e55;
-  --accent-strong: #8a1a30;
-  --border-window: #4a2029;
-  --border-strong: #c42a45;
-  --border-soft: #35171d;
-  --border-inset: #040203;
-  --bevel-hi: #5e2a36;
-  --bevel-sh: #040203;
-  --status-online: #5fce85;
-  --bevel-out: inset 1px 1px 0 var(--bevel-hi), inset -1px -1px 0 var(--bevel-sh);
-  --bevel-in: inset 1px 1px 0 var(--bevel-sh), inset -1px -1px 0 var(--bevel-hi);
-  --font-ui: 'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Osaka-Mono', 'MS Gothic', monospace;
-  --font-pixel: 'DotGothic16', monospace;
-}
+// The production placeholder. Ported from the Denwa "Under Construction" page.
+//
+// The roze theme tokens, the webfonts and the dw-* window chrome all live in
+// the global stylesheet now that the whole site is built on Denwa — this file
+// keeps only what is specific to this page.
 
 .uc-screen {
   min-height: 100vh;
@@ -37,130 +11,16 @@
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  background-color: #0a0507;
-  // faint scattered sparkles
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='none' stroke-linejoin='round'%3E%3Cpath d='M30 18 C30.5 21 32.3 24.8 35 25.3 C32.3 25.8 30.5 27.6 30 30.6 C29.5 27.6 27.7 25.8 25 25.3 C27.7 24.8 29.5 21 30 18 Z' stroke='%23ff2e55' stroke-opacity='0.14'/%3E%3Cpath d='M132 84 C132.4 86.4 133.8 87.8 136.2 88.2 C133.8 88.6 132.4 90 132 92.4 C131.6 90 130.2 88.6 127.8 88.2 C130.2 87.8 131.6 86.4 132 84 Z' stroke='%23f2c14e' stroke-opacity='0.10'/%3E%3Ccircle cx='160' cy='30' r='1' fill='%23ff2e55' fill-opacity='0.16'/%3E%3Ccircle cx='14' cy='120' r='1' fill='%23f2c14e' fill-opacity='0.12'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: 180px 180px;
+  // the sparkle backdrop comes from the global .rz-desktop class
   color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: 13px;
-  line-height: 1.55;
-}
 
-// ---- Denwa window chrome (dw-*) ----
-
-.dw-window {
-  width: min(520px, 100%);
-  max-width: 100%;
-  min-width: 0;
-  background: var(--surface-window);
-  border: 1px solid var(--border-window);
-  box-shadow: var(--bevel-out), 4px 4px 0 var(--accent-soft);
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.dw-titlebar {
-  height: 24px;
-  background: var(--surface-titlebar);
-  color: var(--on-titlebar);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 4px 0 8px;
-  font-size: 11px;
-  user-select: none;
-  flex: none;
-}
-
-.dw-icon {
-  width: 12px;
-  height: 12px;
-  flex: none;
-}
-
-.dw-tb-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: 0.04em;
-}
-
-.dw-tb-btn {
-  width: 18px;
-  height: 15px;
-  background: var(--surface-panel);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--bevel-out);
-  color: var(--text-primary);
-  font: 9px var(--font-mono);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-
-  &:active {
-    box-shadow: var(--bevel-in);
+  > .dw-window {
+    width: min(520px, 100%);
+    box-shadow: var(--bevel-out), 4px 4px 0 var(--accent-soft);
   }
 }
 
-.dw-progress {
-  height: 14px;
-  background: var(--surface-inset);
-  box-shadow: var(--bevel-in);
-  border: 1px solid var(--border-inset);
-  position: relative;
-  overflow: hidden;
-
-  > div {
-    height: 100%;
-    background: repeating-linear-gradient(
-      90deg,
-      var(--accent-strong) 0 6px,
-      transparent 6px 8px
-    );
-  }
-}
-
-.dw-statusbar {
-  min-height: 22px;
-  display: flex;
-  flex-wrap: wrap; // cells drop to the next row on narrow screens
-  align-items: center;
-  background: var(--surface-panel);
-  border-top: 1px solid var(--border-soft);
-  font: 11px var(--font-mono);
-  color: var(--text-muted);
-  flex: none;
-
-  > div {
-    padding: 0 8px;
-    border-right: 1px solid var(--border-soft);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    height: 22px;
-    white-space: nowrap;
-    box-shadow:
-      inset 1px 1px 0 var(--bevel-sh),
-      inset -1px -1px 0 var(--bevel-hi);
-  }
-
-  .uc-status-last {
-    border-right: none;
-  }
-}
-
-.uc-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--status-online);
-}
-
-// ---- Page content ----
+// ---- page content ----
 
 .uc-body {
   padding: 36px 24px 28px;
@@ -195,7 +55,7 @@
   position: absolute;
   bottom: 2px;
   left: -8px;
-  color: #ff2e55;
+  color: var(--accent);
   opacity: 0.7;
   font-size: 12px;
 }
@@ -237,31 +97,22 @@
   color: var(--text-muted);
   margin-top: 18px;
   line-height: 2;
-
-  a {
-    color: #f2c14e;
-
-    &:hover {
-      color: #ff2e55;
-      text-shadow: 0 0 8px rgba(255, 46, 85, 0.55);
-    }
-  }
 }
 
-// ---- Links dialog ----
+// ---- links dialog ----
 
 .uc-links-btn {
   font: inherit;
   background: none;
   border: none;
   padding: 0;
-  color: #f2c14e;
+  color: var(--text-link);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 
   &:hover {
-    color: #ff2e55;
+    color: var(--text-link-hover);
     text-shadow: 0 0 8px rgba(255, 46, 85, 0.55);
   }
 }
@@ -269,12 +120,12 @@
 .uc-scrim {
   position: fixed;
   inset: 0;
-  background: rgba(10, 5, 7, 0.78);
+  background: var(--scrim);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  z-index: 10;
+  z-index: var(--z-dialog);
 }
 
 .uc-dialog {
@@ -327,7 +178,7 @@
 }
 
 .uc-link-glyph {
-  color: #f2c14e;
+  color: var(--text-link);
   flex: none;
 }
 
@@ -339,7 +190,7 @@
 }
 
 .uc-link-label {
-  color: #f2c14e;
+  color: var(--text-link);
 }
 
 .uc-link-desc {
@@ -356,7 +207,7 @@
   flex: none;
 }
 
-// ---- Eye animation ----
+// ---- the eye ----
 
 .rz-iris {
   animation: rz-iris 5s ease-in-out infinite;

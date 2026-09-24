@@ -1,0 +1,308 @@
+// ROZE-OS, mobile shell. A phone: status bar, home screen, app views, dock.
+
+:host {
+  display: contents;
+}
+
+.mos {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  border-left: 1px solid var(--border-soft);
+  border-right: 1px solid var(--border-soft);
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+  user-select: none;
+}
+
+// ---- status bar ----
+.mos-status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface-titlebar);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 6px 12px;
+  color: var(--on-titlebar);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+
+  &__brand {
+    font-family: var(--font-pixel);
+    font-size: 15px;
+  }
+
+  &__spark {
+    color: #ffd23f;
+    text-shadow: 0 0 8px rgba(255, 46, 85, 0.9);
+  }
+
+  &__door {
+    margin-left: auto;
+    color: #ff9db2;
+  }
+}
+
+// ---- home screen ----
+.mos-home {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.mos-head {
+  text-align: center;
+  padding: 26px 16px 6px;
+
+  &__mark {
+    font-family: var(--font-pixel);
+    font-size: clamp(24px, 9vw, 32px);
+    line-height: 1.1;
+  }
+
+  &__spark {
+    color: var(--accent);
+    text-shadow: 0 0 12px rgba(255, 46, 85, 0.7);
+  }
+
+  &__status {
+    font-family: var(--font-mono);
+    font-size: var(--fs-2xs);
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+}
+
+.mos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 18px 14px;
+}
+
+.mos-app {
+  min-height: 88px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 4px;
+  font: inherit;
+
+  &:active .mos-app__tile {
+    box-shadow: var(--bevel-in);
+    transform: translate(1px, 1px);
+  }
+
+  &__tile {
+    width: 52px;
+    height: 52px;
+    background: var(--surface-window);
+    border: 1px solid var(--border-strong);
+    box-shadow: 2px 2px 0 var(--accent-soft);
+    display: grid;
+    place-content: center;
+
+    .dw-icon {
+      width: 24px;
+      height: 24px;
+      color: var(--text-system);
+    }
+
+    &--locked .dw-icon {
+      color: var(--danger);
+    }
+  }
+
+  &__label {
+    font-size: var(--fs-xs);
+    text-align: center;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  &__tag {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--danger);
+  }
+}
+
+.mos-exit {
+  align-self: center;
+  min-height: 40px;
+}
+
+.mos-foot {
+  margin-top: auto;
+  text-align: center;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--text-faint);
+}
+
+// ---- app view ----
+.mos-app-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-window);
+
+  &__bar {
+    flex: none;
+  }
+
+  &__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  &__status {
+    flex: none;
+  }
+}
+
+.mos-close {
+  min-width: 34px;
+  min-height: 26px;
+}
+
+.mos-toolbar {
+  flex-wrap: wrap;
+}
+
+.mos-search {
+  flex: 1;
+  min-width: 120px;
+  min-height: 32px;
+  font-size: var(--fs-sm);
+}
+
+.mos-chip {
+  min-height: 32px;
+}
+
+.mos-table td {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.mos-dir {
+  &__glyph {
+    color: var(--accent);
+    text-align: center;
+    width: 26px;
+  }
+
+  &__label {
+    color: var(--text-link);
+  }
+
+  &__action {
+    width: 64px;
+    color: var(--text-system);
+  }
+
+  &__empty {
+    padding: 16px;
+    color: var(--text-muted);
+  }
+}
+
+.mos-full {
+  margin: 10px 12px 14px;
+}
+
+.mos-control {
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+  font-size: var(--fs-base);
+
+  &__aside {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+  }
+
+  &__go {
+    min-height: 44px;
+    margin-top: 4px;
+  }
+}
+
+.mos-log {
+  border: none;
+  box-shadow: none;
+  min-height: 100%;
+  font-size: var(--fs-sm);
+
+  // Angular collapses the whitespace between the timestamp and the message.
+  .t {
+    margin-right: 6px;
+  }
+}
+
+.mos-caret {
+  animation: var(--blink);
+}
+
+// ---- dock ----
+.mos-dock {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  background: var(--surface-panel);
+  border-top: 1px solid var(--border-strong);
+  padding: 4px 6px;
+  gap: 4px;
+
+  &__btn {
+    flex: 1;
+    min-height: 46px;
+    background: transparent;
+    border: 1px solid var(--border-soft);
+    cursor: pointer;
+    color: var(--text-primary);
+    display: grid;
+    place-content: center;
+    font: inherit;
+
+    .dw-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    &--den {
+      font-family: var(--font-pixel);
+      font-size: 15px;
+    }
+
+    &--on {
+      background: var(--surface-selected);
+      color: var(--on-selected);
+    }
+  }
+}
+
+// The look comes from the global .rz-toast; it just has to clear the dock.
+.mos-toast {
+  bottom: 64px;
+  z-index: 9500;
+  white-space: nowrap;
+}

@@ -1,0 +1,213 @@
+<div class="os rz-desktop" (click)="dismissMenu()" (window:keydown)="onKeydown($event)">
+  <!-- ===== wordmark ===== -->
+  <div class="os-mark" aria-hidden="true">
+    roze's den<span class="os-mark__spark"> ✦</span>
+    <div class="os-mark__status">DEN STATUS: COMFY · {{ clock() }}</div>
+  </div>
+
+  <!-- ===== desktop icons ===== -->
+  <div class="os-icons">
+    @for (icon of icons; track icon.id) {
+      <button class="os-icon" type="button" (dblclick)="open(icon.id)" (click)="open(icon.id)">
+        <dw-icon [name]="icon.icon" />
+        <span class="os-icon__label">
+          {{ icon.label }}
+          @if (icon.tag) {
+            <span class="os-icon__tag">{{ icon.tag }}</span>
+          }
+        </span>
+      </button>
+    }
+  </div>
+
+  <!-- ===== directory.exe ===== -->
+  @if (isShown('directory')) {
+    <section
+      class="dw-window os-win os-win--directory"
+      [style.left.px]="win('directory').x"
+      [style.top.px]="win('directory').y"
+      [style.z-index]="win('directory').z"
+      (pointerdown)="focus('directory')"
+      role="dialog"
+      aria-label="the directory"
+    >
+      <div class="dw-titlebar os-drag" (pointerdown)="startDrag('directory', $event)">
+        <dw-icon name="folder" />
+        <span class="dw-tb-title">directory.exe — C:\den\links</span>
+        <button class="dw-tb-btn" type="button" aria-label="minimize" (click)="minimize('directory', $event)">_</button>
+        <button class="dw-tb-btn" type="button" aria-label="close" (click)="close('directory', $event)">×</button>
+      </div>
+
+      <div class="dw-toolbar">
+        <label class="visually-hidden" for="os-search">search the directory</label>
+        <input
+          id="os-search"
+          class="dw-input os-search"
+          placeholder="search…"
+          [(ngModel)]="query"
+        />
+        <div class="dw-sep"></div>
+        <button
+          class="dw-btn dw-btn--toolbar"
+          type="button"
+          [attr.aria-pressed]="category() === null"
+          (click)="setCategory(null)"
+        >
+          all
+        </button>
+        @for (cat of categories(); track cat) {
+          <button
+            class="dw-btn dw-btn--toolbar"
+            type="button"
+            [attr.aria-pressed]="category() === cat"
+            (click)="setCategory(cat)"
+          >
+            {{ cat }}
+          </button>
+        }
+      </div>
+
+      <table class="dw-table">
+        <thead>
+          <tr>
+            <th style="width: 26px"></th>
+            <th>name</th>
+            <th>note</th>
+            <th style="width: 80px; text-align: right">action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of visibleLinks(); track row.label) {
+            <tr class="clickable" (click)="openLink(row)">
+              <td class="os-dir__glyph">{{ row.glyph }}</td>
+              <td><span class="os-dir__label">{{ row.label }}</span></td>
+              <td class="os-dir__note">{{ row.note }}</td>
+              <td class="num os-dir__action">{{ row.action }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="os-dir__empty">nothing matches that.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="dw-statusbar">
+        <div>{{ visibleLinks().length }} OF {{ linkCount() }} OBJECTS</div>
+        <div>migrated from roze-tree ♥</div>
+        <div>
+          <button class="os-link" type="button" (click)="openDirectoryPage()">full page »</button>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- ===== control room ===== -->
+  @if (isShown('control')) {
+    <section
+      class="dw-window os-win os-win--control"
+      [style.left.px]="win('control').x"
+      [style.top.px]="win('control').y"
+      [style.z-index]="win('control').z"
+      (pointerdown)="focus('control')"
+      role="dialog"
+      aria-label="the control room"
+    >
+      <div class="dw-titlebar os-drag" (pointerdown)="startDrag('control', $event)">
+        <dw-icon name="lock" />
+        <span class="dw-tb-title">access — control_room.exe</span>
+        <span class="dw-tb-note">MEMBERS ONLY</span>
+        <button class="dw-tb-btn" type="button" aria-label="minimize" (click)="minimize('control', $event)">_</button>
+        <button class="dw-tb-btn" type="button" aria-label="close" (click)="close('control', $event)">×</button>
+      </div>
+
+      <div class="os-control">
+        <p>a private forum sits behind this door, for invited friends.</p>
+        <p>
+          invites are personal. if we know each other, just ask — she'll mint you a code.
+        </p>
+        <p class="os-control__aside">if you're meant to be inside, you already know.</p>
+        <button class="dw-btn dw-btn--primary os-control__go" type="button" (click)="standAtDoor()">
+          stand at the door »
+        </button>
+      </div>
+
+      <div class="dw-statusbar">
+        <div>DOOR: LOCKED</div>
+        <div>AUTH: PBKDF2</div>
+        <div>接続中…</div>
+      </div>
+    </section>
+  }
+
+  <!-- ===== den.log ===== -->
+  @if (isShown('denlog')) {
+    <section
+      class="dw-window os-win os-win--denlog"
+      [style.left.px]="win('denlog').x"
+      [style.top.px]="win('denlog').y"
+      [style.z-index]="win('denlog').z"
+      (pointerdown)="focus('denlog')"
+      role="dialog"
+      aria-label="den.log"
+    >
+      <div
+        class="dw-titlebar dw-titlebar--inactive os-drag"
+        (pointerdown)="startDrag('denlog', $event)"
+      >
+        <span class="dw-tb-title">den.log</span>
+        <button class="dw-tb-btn" type="button" aria-label="minimize" (click)="minimize('denlog', $event)">_</button>
+        <button class="dw-tb-btn" type="button" aria-label="close" (click)="close('denlog', $event)">×</button>
+      </div>
+      <div class="dw-log os-log">
+        @for (line of log(); track $index) {
+          <div>
+            <span class="t">{{ line.t }}</span>
+            <span [class.anom]="line.anomalous">{{ line.message }}</span>
+          </div>
+        }
+        <span class="os-caret" aria-hidden="true">▌</span>
+      </div>
+    </section>
+  }
+
+  <!-- ===== start menu ===== -->
+  @if (menuOpen()) {
+    <div class="dw-menu os-menu">
+      @for (icon of icons; track icon.id) {
+        <button type="button" (click)="open(icon.id)">
+          <dw-icon [name]="icon.icon" />{{ icon.label }}
+        </button>
+      }
+      <hr />
+      <button type="button" (click)="exit()"><dw-icon name="eye" />vn_mode.exe →</button>
+    </div>
+  }
+
+  <!-- ===== taskbar ===== -->
+  <div class="os-taskbar">
+    <button class="dw-btn dw-btn--sm os-start" type="button" (click)="toggleMenu($event)">
+      ✦ start
+    </button>
+    <div class="os-taskbar__sep"></div>
+
+    @for (task of taskbar(); track task.id) {
+      <button
+        class="dw-btn dw-btn--sm os-task"
+        [class.os-task--min]="task.minimized"
+        type="button"
+        (click)="toggleFromTaskbar(task.id)"
+      >
+        {{ task.label }}
+      </button>
+    }
+
+    <span class="os-taskbar__clock">
+      made with <span class="os-heart">♥</span> by roze · {{ clock() }}
+    </span>
+  </div>
+
+  @if (toast(); as message) {
+    <div class="os-toast" role="status">{{ message }}</div>
+  }
+</div>

@@ -1,1 +1,39 @@
-/* Form styles live in global styles.scss so every forum page shares them. */
+// "The leash" — the admin invite panel. Everything else on this page comes
+// from the global Denwa classes.
+
+.rz-invite-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  .dw-input {
+    flex: 1;
+    min-width: 220px;
+  }
+}
+
+.rz-invite-result {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 8px 10px;
+}
+
+.rz-invite-note {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.rz-invite-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-system);
+  flex: 1;
+  min-width: 220px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 2px 0;
+}

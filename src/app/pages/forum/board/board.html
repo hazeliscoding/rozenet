@@ -1,66 +1,134 @@
-<div class="gn-shell fade">
-  <header class="gn-masthead">
-    <div class="gn-wordmark">the control room<span class="gn-spark"> ✦</span></div>
-    <div class="gn-tagline">⌂ <a routerLink="/forum">boards</a> » <b>{{ slug }}</b></div>
-  </header>
+<div class="rz-page fade">
+  <p class="rz-crumbs">
+    <a routerLink="/forum">boards</a> » <span class="here">{{ slug }}</span>
+  </p>
 
-  <div class="gn-counter">
-    <b>{{ threads().length }}</b> threads ·
-    <a href="#" (click)="$event.preventDefault(); composing.set(!composing())">
-      {{ composing() ? 'never mind' : 'new thread +' }}
-    </a>
-  </div>
-
-  @if (composing()) {
-    <section class="gn-panel gn-panel--pop" style="margin-bottom: 1.6rem">
-      <div class="gn-panel__head">
-        <span class="gn-panel__glyph">✎</span>new thread
-      </div>
-      <div class="gn-panel__body">
-        <form (ngSubmit)="post()">
-          <label class="field">
-            <span>title</span>
-            <input class="input" name="title" [(ngModel)]="newTitle" maxlength="140" required />
-          </label>
-          <label class="field">
-            <span>first post</span>
-            <textarea class="textarea" name="body" [(ngModel)]="newBody" required></textarea>
-          </label>
-          @if (error()) { <p class="form-error">{{ error() }}</p> }
-          <button class="gn-btn" type="submit" [disabled]="busy()">
-            {{ busy() ? 'posting...' : 'post thread' }}
+  <div class="rz-stack">
+    @if (composing()) {
+      <section class="dw-window" style="max-width: 640px">
+        <div class="dw-titlebar">
+          <dw-icon name="file" />
+          <span class="dw-tb-title">new thread — {{ slug }}</span>
+          <button
+            class="dw-tb-btn"
+            type="button"
+            aria-label="close"
+            (click)="composing.set(false)"
+          >
+            ×
           </button>
-        </form>
+        </div>
+        <div style="padding: 14px 16px">
+          <form (ngSubmit)="post()" style="display: grid; gap: 10px">
+            <div class="dw-field">
+              <label for="thread-title">title</label>
+              <input
+                id="thread-title"
+                class="dw-input"
+                name="title"
+                [(ngModel)]="newTitle"
+                maxlength="140"
+                required
+              />
+            </div>
+            <div class="dw-field">
+              <label for="thread-body">first post</label>
+              <textarea
+                id="thread-body"
+                class="dw-input"
+                name="body"
+                [(ngModel)]="newBody"
+                required
+              ></textarea>
+            </div>
+
+            @if (error(); as message) {
+              <div class="dw-alert dw-alert--error">{{ message }}</div>
+            }
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px">
+              <button class="dw-btn" type="button" (click)="composing.set(false)">never mind</button>
+              <button class="dw-btn dw-btn--primary" type="submit" [disabled]="busy()">
+                {{ busy() ? 'posting…' : 'post thread' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    }
+
+    <section class="dw-window">
+      <div class="dw-titlebar">
+        <dw-icon name="message" />
+        <span class="dw-tb-title"
+          >{{ slug }} — {{ threads().length }} thread{{ threads().length === 1 ? '' : 's' }}</span
+        >
+        <button class="dw-tb-btn" type="button" aria-label="minimize">_</button>
+        <button class="dw-tb-btn" type="button" aria-label="close">×</button>
+      </div>
+
+      <div class="dw-toolbar">
+        <button class="dw-btn dw-btn--toolbar" type="button" (click)="composing.set(!composing())">
+          {{ composing() ? '× never mind' : '+ new thread' }}
+        </button>
+        <div class="dw-sep"></div>
+        <a class="dw-btn dw-btn--toolbar" routerLink="/forum">« all boards</a>
+      </div>
+
+      <table class="dw-table">
+        <thead>
+          <tr>
+            <th style="width: 30px"></th>
+            <th>thread</th>
+            <th style="width: 90px; text-align: right">replies</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (thread of threads(); track thread.id) {
+            <tr class="clickable" [routerLink]="['/forum/t', thread.id]">
+              <td
+                style="text-align: center"
+                [style.color]="thread.sticky ? 'var(--accent)' : 'var(--text-faint)'"
+              >
+                {{ thread.sticky ? '★' : '☆' }}
+              </td>
+              <td>
+                @if (thread.sticky) {
+                  <span class="dw-badge dw-badge--system">pinned</span>
+                }
+                @if (thread.locked) {
+                  <span class="dw-badge dw-badge--danger">locked</span>
+                }
+                <a
+                  [routerLink]="['/forum/t', thread.id]"
+                  (click)="$event.stopPropagation()"
+                  >{{ thread.title }}</a
+                >
+                <div class="dw-table__desc">
+                  by {{ thread.author }} · {{ thread.lastPostAt | date: 'yyyy/MM/dd HH:mm' }}
+                </div>
+              </td>
+              <td class="num" style="color: var(--text-system)">{{ thread.replies }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" style="padding: 16px; color: var(--text-muted)">
+                no threads yet… start one ☆
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="dw-statusbar">
+        <div>{{ threads().length }} THREAD{{ threads().length === 1 ? '' : 'S' }}</div>
+        <div>MEMBERS: CLASSIFIED</div>
+        <div>be a good visitor ♥</div>
       </div>
     </section>
-  }
 
-  <section class="gn-panel">
-    <div class="gn-panel__head">
-      <span class="gn-panel__glyph">►</span>threads
-      <span class="gn-panel__count">{{ threads().length }}</span>
-    </div>
-    <table class="gn-table">
-      <tbody>
-        @for (thread of threads(); track thread.id) {
-          <tr class="clickable" [routerLink]="['/forum/t', thread.id]">
-            <td class="gn-mark" [class.gn-mark--new]="thread.sticky">{{ thread.sticky ? '★' : '☆' }}</td>
-            <td>
-              @if (thread.sticky) { <b class="gn-newtag">[sticky]</b> }
-              @if (thread.locked) { <b class="gn-newtag gn-newtag--locked">[locked]</b> }
-              <a [routerLink]="['/forum/t', thread.id]" (click)="$event.stopPropagation()">{{ thread.title }}</a>
-              <div class="gn-table__desc">by {{ thread.author }} · {{ thread.lastPostAt | date: 'MMM d, y, h:mm a' }}</div>
-            </td>
-            <td class="gn-table__meta"><span class="gn-mono">{{ thread.replies }}</span> replies</td>
-          </tr>
-        } @empty {
-          <tr><td colspan="3" style="padding: 1.2rem">no threads yet... start one! ☆</td></tr>
-        }
-      </tbody>
-    </table>
-  </section>
-
-  <div class="gn-webring">
-    <a routerLink="/forum">« all boards</a>
+    @if (error() && !composing()) {
+      <div class="dw-alert dw-alert--error">{{ error() }}</div>
+    }
   </div>
 </div>

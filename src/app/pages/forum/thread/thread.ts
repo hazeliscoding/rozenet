@@ -6,12 +6,14 @@ import { AuthService } from '../../../services/auth.service';
 import { ForumService } from '../../../services/forum.service';
 import { Post, ThreadView, REACTION_PALETTE } from '../../../services/forum.types';
 import { apiError } from '../../../services/errors';
+import { IconComponent } from '../../../components/icon';
 
 @Component({
   selector: 'thread-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, IconComponent],
   templateUrl: './thread.html',
+  styleUrl: './thread.scss',
 })
 export class ThreadPage {
   private route = inject(ActivatedRoute);
@@ -62,6 +64,16 @@ export class ThreadPage {
 
   isFirst(post: Post): boolean {
     return this.view()?.posts[0]?.id === post.id;
+  }
+
+  /** Denwa metadata voice: POST #001, POST #002… */
+  postNo(index: number): string {
+    return String(index + 1).padStart(3, '0');
+  }
+
+  /** No avatars in the schema — Denwa's pixel face stands in for one. */
+  initial(name: string): string {
+    return (name.trim()[0] ?? '?').toUpperCase();
   }
 
   // ---- reactions ----

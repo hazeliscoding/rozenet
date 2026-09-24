@@ -1,29 +1,37 @@
-<div appSparkleCursor>
-  @if (!underConstruction) {
-  <nav class="gn-topbar">
-    <a class="gn-topbar__brand" routerLink="/">rozenet<span class="gn-spark"> ✦</span></a>
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">home</a>
-    <a routerLink="/links" routerLinkActive="active">links</a>
-    <a routerLink="/forum" routerLinkActive="active">forum</a>
-    <span class="gn-topbar__crumb">⌂ den » <b>roze</b></span>
-  </nav>
+<div appSparkleCursor class="rz-shell" [class.rz-desktop]="showChrome()">
+  @if (showChrome()) {
+    <nav class="rz-nav">
+      <a class="rz-nav__brand" routerLink="/">rozenet<span class="rz-spark"> ✦</span></a>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">home</a>
+      <a routerLink="/links" routerLinkActive="active">links</a>
+      <a routerLink="/forum" routerLinkActive="active">forum</a>
+
+      <span class="rz-nav__crumb">
+        @if (onForum() && auth.user(); as me) {
+          signed in: <b>{{ me.username }}</b>@if (me.isAdmin) { [mod] } ·
+          <a href="#" (click)="$event.preventDefault(); logout()">log out</a>
+        } @else {
+          {{ crumb() }}
+        }
+      </span>
+    </nav>
   }
 
   <main>
     <router-outlet />
   </main>
 
-  @if (!underConstruction) {
-  <footer class="gn-footer">
-    <div class="gn-webring">
-      <a routerLink="/">« home</a>
-      <span class="gn-webring__dot">✦</span>
-      <a routerLink="/links">links</a>
-      <span class="gn-webring__dot">✦</span>
-      <a routerLink="/forum">forum »</a>
-    </div>
-    <p style="margin-top: 1.2rem">made with <span class="heart">♥</span> by roze</p>
-    <p class="mono">you were never in control of this page</p>
-  </footer>
+  @if (showChrome()) {
+    <footer class="rz-footer">
+      <div class="rz-footer__ring">
+        <a routerLink="/">« home</a>
+        <span class="rz-spark">✦</span>
+        <a routerLink="/links">links</a>
+        <span class="rz-spark">✦</span>
+        <a routerLink="/forum">forum »</a>
+      </div>
+      <p>made with <span class="rz-spark">♥</span> by roze</p>
+      <p class="mono">you were never in control of this page</p>
+    </footer>
   }
 </div>

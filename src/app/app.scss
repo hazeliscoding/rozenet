@@ -1,1 +1,13 @@
-// Shell styling comes from the global GlitterNet classes.
+// Shell layout. Everything else comes from the global Denwa classes.
+
+.rz-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+main {
+  flex: 1;
+  min-width: 0;
+}

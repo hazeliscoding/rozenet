@@ -6,11 +6,12 @@ import { AuthService } from '../../../services/auth.service';
 import { ForumService } from '../../../services/forum.service';
 import { ThreadRow } from '../../../services/forum.types';
 import { apiError } from '../../../services/errors';
+import { IconComponent } from '../../../components/icon';
 
 @Component({
   selector: 'board-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, IconComponent],
   templateUrl: './board.html',
 })
 export class BoardPage {
