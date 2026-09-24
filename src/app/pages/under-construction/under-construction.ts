@@ -1,5 +1,7 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { LinksService } from '../../services/links.service';
+import { PreviewService } from '../../services/preview.service';
 import { LinkCategory, LinkItem } from '../../data/links.data';
 
 @Component({
@@ -10,6 +12,8 @@ import { LinkCategory, LinkItem } from '../../data/links.data';
 })
 export class UnderConstructionPage {
   private linksService = inject(LinksService);
+  private router = inject(Router);
+  private preview = inject(PreviewService);
 
   categories = signal<LinkCategory[]>([]);
   linksOpen = signal(false);
@@ -24,6 +28,13 @@ export class UnderConstructionPage {
 
   get linkCount(): number {
     return this.categories().reduce((n, c) => n + c.links.length, 0);
+  }
+
+  /** Preview the unfinished site, starting from whatever path the visitor landed on. */
+  stepInside() {
+    this.preview.enter();
+    // Same URL, but this page's route no longer matches it — re-run the match.
+    this.router.navigateByUrl(this.router.url, { onSameUrlNavigation: 'reload' });
   }
 
   openLinks() {

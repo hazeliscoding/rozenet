@@ -1,5 +1,6 @@
-import { isDevMode } from '@angular/core';
+import { inject, isDevMode } from '@angular/core';
 import { Routes } from '@angular/router';
+import { PreviewService } from './services/preview.service';
 
 const siteRoutes: Routes = [
   {
@@ -30,15 +31,18 @@ const siteRoutes: Routes = [
 ];
 
 // The site is under construction: production builds show the placeholder page
-// on every path, while `ng serve` (dev builds) keeps the real site.
+// on every path, while `ng serve` (dev builds) keeps the real site. The
+// placeholder's preview button lets the real site through for that tab.
 const underConstructionRoutes: Routes = [
   {
     path: '**',
+    canMatch: [() => !inject(PreviewService).active()],
     loadComponent: () =>
       import('./pages/under-construction/under-construction').then(
         (m) => m.UnderConstructionPage,
       ),
   },
+  ...siteRoutes,
 ];
 
 export const routes: Routes = isDevMode()

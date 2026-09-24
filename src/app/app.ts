@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter, map } from 'rxjs/operators';
 import { SparkleCursorDirective } from './directives/sparkle-cursor.directive';
 import { AuthService } from './services/auth.service';
+import { PreviewService } from './services/preview.service';
 
 @Component({
   selector: 'app-root',
@@ -15,8 +16,11 @@ export class App {
   private router = inject(Router);
   protected auth = inject(AuthService);
 
-  // Prod builds show only the under-construction page, without the site chrome.
-  protected readonly underConstruction = !isDevMode();
+  private preview = inject(PreviewService);
+
+  // Prod builds show only the under-construction page, without the site chrome,
+  // until the visitor chooses to preview the site.
+  protected readonly underConstruction = computed(() => !isDevMode() && !this.preview.active());
 
   private readonly path = toSignal(
     this.router.events.pipe(
@@ -28,7 +32,7 @@ export class App {
 
   /** The den is a full-viewport visual novel — it carries its own chrome. */
   protected readonly immersive = computed(() => this.path() === '/');
-  protected readonly showChrome = computed(() => !this.underConstruction && !this.immersive());
+  protected readonly showChrome = computed(() => !this.underConstruction() && !this.immersive());
 
   protected readonly onForum = computed(() => this.path().startsWith('/forum'));
 
